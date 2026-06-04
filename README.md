@@ -1,5 +1,7 @@
 # PostgreSQL AI Edition — `pg_ai`
 
+[![CI](https://github.com/devjamez/postgresql-ai-edition/actions/workflows/ci.yml/badge.svg)](https://github.com/devjamez/postgresql-ai-edition/actions/workflows/ci.yml)
+
 Make PostgreSQL intelligent: embeddings, semantic search, RAG and agents — **inside the database**, with maximum PostgreSQL compatibility.
 
 This repository is the **thin edition**: a pure extension (no fork of the PostgreSQL C core) that delivers the full AI experience by orchestrating model APIs (OpenAI / Anthropic) from inside Postgres via PL/Python and SQL. It runs on **standard PostgreSQL** — no patched server.
