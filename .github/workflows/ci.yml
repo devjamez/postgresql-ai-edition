@@ -14,6 +14,7 @@ jobs:
         pg: [16, 17]
     env:
       PG_VERSION: ${{ matrix.pg }}
+      WITH_PGTAP: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -35,6 +36,14 @@ jobs:
 
       - name: Run smoke tests
         run: docker compose exec -T db psql -U postgres -d pgai -v ON_ERROR_STOP=1 -f - < test/smoke.sql
+
+      - name: Run pgTAP tests
+        run: |
+          docker compose exec -T db psql -U postgres -d pgai -c "CREATE EXTENSION IF NOT EXISTS pgtap;"
+          out=$(docker compose exec -T db psql -U postgres -d pgai -t -A -q -f - < test/pgtap/pg_ai_test.sql)
+          echo "$out"
+          if echo "$out" | grep -q '^not ok'; then echo "pgTAP failures detected"; exit 1; fi
+          echo "pgTAP: all assertions passed"
 
       - name: Show DB logs on failure
         if: failure()

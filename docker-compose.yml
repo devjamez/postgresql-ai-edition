@@ -12,6 +12,7 @@ services:
       context: .
       args:
         PG_VERSION: ${PG_VERSION:-16}
+        WITH_PGTAP: ${WITH_PGTAP:-0}
     container_name: pg_ai
     command: ["postgres", "-c", "shared_preload_libraries=pg_ai_core", "-c", "pg_ai_core.enable_worker=on"]
     depends_on:

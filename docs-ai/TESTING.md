@@ -37,5 +37,14 @@ docker compose down -v && docker compose up -d --build
 docker compose exec -T db psql -U postgres -d pgai < examples/demo.sql
 ```
 
-## CI (later)
+## pgTAP suite
+
+Formal unit tests in `test/pgtap/pg_ai_test.sql` (structure, RBAC, deterministic behavior — no model needed). Build the image with `WITH_PGTAP=1`, then:
+```bash
+docker compose exec -T db psql -U postgres -d pgai -c "CREATE EXTENSION pgtap;"
+docker compose exec -T db psql -U postgres -d pgai -t -A -q -f - < test/pgtap/pg_ai_test.sql
+```
+CI runs this on every push (PG 16 and 17).
+
+## CI
 GitHub Actions: spin up the container, run smoke + mocked functional tests on every PR (no key in CI). Key-dependent integration tests run on demand / nightly with a repo secret.
