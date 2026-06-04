@@ -92,6 +92,8 @@ Reset only the database (keeps the downloaded models):
 | `ai.filter_ann(emb, table, content_col, emb_col, filters jsonb, k) -> setof` | Filtered ANN: safe equality filters (jsonb) + vector order + top-k (adaptive over-fetch) |
 | `ai.filtered_search(query, table, content_col, emb_col, filters jsonb, k) -> setof` | `ai.filter_ann` with the query embedded for you |
 | `ai.filter_ann_raw(emb, table, content_col, emb_col, predicate, k) -> setof` | Advanced: raw SQL predicate (**trusted input only**; revoked from PUBLIC) |
+| `ai.chunk(doc, max_chars, overlap) -> setof text` | Split a long document into overlapping windows for embedding |
+| `ai.search_mmr(emb, table, content_col, emb_col, k, fetch_n, lambda_weight) -> setof` | MMR reranking: relevance vs. diversity (no model call) |
 | `ai.create_agent(name, system_prompt, model) -> int` | Register an agent |
 | `ai.call_agent(name, message) -> text` | Call an agent (with memory) |
 

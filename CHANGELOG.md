@@ -3,6 +3,18 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versioning is [SemVer](https://semver.org/).
 
+## [0.4.0] — 2026-06-04
+
+### Added — RAG quality
+- `ai.chunk(doc, max_chars, overlap) -> setof text` — split long documents into overlapping windows for embedding.
+- `ai.search_mmr(query_embedding, table, content_col, emb_col, k, fetch_n, lambda_weight) -> setof` — MMR reranking: balances relevance to the query against diversity (no model call).
+
+### Changed
+- Provider calls now retry once on transient `5xx` responses (in addition to network errors).
+
+### Upgrade
+- `ALTER EXTENSION pg_ai UPDATE TO '0.4.0';`
+
 ## [0.3.0] — 2026-06-04
 
 Hardening release.

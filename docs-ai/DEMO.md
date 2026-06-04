@@ -68,3 +68,28 @@ SELECT content, round(distance::numeric,3) FROM ai.filtered_search(
 ```
 
 The filtered query **drops the closer software row** and reaches further to return 3 `hardware` rows — adaptive over-fetch via pgvector's iterative scan, no engine fork.
+
+## 5. Why over-fetch matters (benchmark)
+
+50k rows, a selective filter (`cat = 'rare'`, ~1%), top-10 over the HNSW index (`examples/benchmark.sql`):
+
+```
+naive_off_rows = 4    -- bounded ANN scan + post-filter: under-returns
+fused_rows     = 10   -- adaptive over-fetch (ai.filter_ann): full top-k
+```
+
+A bounded ANN candidate set rarely contains 10 rows matching a 1% filter — so naive post-filtering returns too few. `ai.filter_ann` keeps scanning until it has the real top-k.
+
+## 6. Ingestion pipeline (chunk → batch-embed → MMR → RAG)
+
+`examples/ingestion.sql` — a document is chunked, embedded in one batched call, then queried. Semantic search vs. **MMR reranking** (note MMR returns a *different, more diverse* set than pure similarity):
+
+```
+semantic top-3            sim          MMR top-3 (diversified)        mmr
+------------------------  -----        ---------------------------    ------
+pg_ai adds embeddings...  0.687        pg_ai adds embeddings...        0.343
+Ollama runs models...     0.610        Ollama runs models...          -0.051
+GPU ... Ollama runs...    0.589        PostgreSQL is a powerful...    -0.112
+```
+
+MMR drops the near-duplicate "GPU … Ollama runs…" chunk in favor of a distinct one.

@@ -126,4 +126,24 @@ BEGIN
   RAISE NOTICE 'RBAC deny-by-default OK';
 END $$;
 
+-- 7) chunking + MMR rerank (no Ollama; MMR reuses the ann_t fixture)
+DO $$
+DECLARE
+  nchunks int;
+  qv      vector;
+  nres    int;
+BEGIN
+  SELECT count(*) INTO nchunks FROM ai.chunk(repeat('x', 1000), 200, 20);
+  IF nchunks < 5 THEN
+    RAISE EXCEPTION 'chunk produced too few windows: %', nchunks;
+  END IF;
+
+  qv := ('[' || (SELECT string_agg(random()::text, ',') FROM generate_series(1,768)) || ']')::vector;
+  SELECT count(*) INTO nres FROM ai.search_mmr(qv, 'ann_t', 'cat', 'emb', 5, 20, 0.5);
+  IF nres <> 5 THEN
+    RAISE EXCEPTION 'search_mmr returned % rows, expected 5', nres;
+  END IF;
+  RAISE NOTICE 'chunk + MMR OK (chunks=%, mmr_rows=%)', nchunks, nres;
+END $$;
+
 \echo '=== ALL SMOKE TESTS PASSED ==='
