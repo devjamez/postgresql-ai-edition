@@ -45,6 +45,19 @@ flowchart LR
 
 Everything runs **inside PostgreSQL**. The thin layer (`pg_ai`) orchestrates a local model via PL/Python; `pg_ai_core` integrates with the engine in C. No external service, no API key.
 
+## Why in-database? (the technical case)
+
+The classic AI stack keeps **two datastores** — your relational PostgreSQL *and* a vector DB — plus orchestration glue in the app. `pg_ai` collapses that into one. What you gain, concretely:
+
+1. **One source of truth (ACID).** The embedding is a `vector` column next to the row it describes, updated in the *same transaction*. No dual-write, no re-sync jobs, no consistency drift between two systems.
+2. **Semantic search composes with SQL.** `JOIN` + relational filter + vector ordering + transaction in a single query — instead of "query the vector DB → fetch IDs → query Postgres → filter in app". `ai.filter_ann` + adaptive over-fetch even return the correct top-k under selective filters (the pre/post-filter problem).
+3. **Security for free.** Roles, `GRANT`, and **Row-Level Security** apply to `ai.rag`/`ai.filtered_search` — multi-tenant isolation with no authorization logic duplicated in an external service.
+4. **The engine is AI-aware.** `pg_ai_core` (C) hooks the planner and adds a custom scan, so a `WHERE … ORDER BY emb <=> $1 LIMIT k` is optimized transparently — integration at the engine level, not a wrapper.
+5. **Agent runtime inside the DB.** Agents, memory, tools, workflows and a background worker (queue + scheduling) are transactional, backed by normal `pg_dump`/PITR and streaming replication — no separate stateful service.
+6. **Fewer moving parts.** Local inference (Ollama, no API key) keeps data on the host, and you operate **one system you already run** — one backup, one HA story, one monitoring model.
+
+**Honest trade-offs:** a dedicated vector DB shards further at extreme scale, and managed PostgreSQL (RDS/Cloud SQL) usually can't load `plpython3u` (so the AI layer needs self-managed PG). For the vast majority of apps already on Postgres, removing the second system is less complexity, not more. More in [docs-ai/05-ai-storage.md](docs-ai/05-ai-storage.md).
+
 ## Requirements
 
 - **Docker Desktop** (the only thing you must install). Tested on **PostgreSQL 16 and 17**.
