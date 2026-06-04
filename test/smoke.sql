@@ -174,4 +174,33 @@ BEGIN
   RAISE NOTICE 'auto_fuse no-leak OK';
 END $$;
 
+-- 9) V2 runtime: tools + workflows (deterministic, no Ollama) + audit table
+DO $$
+DECLARE r text; n int;
+BEGIN
+  -- tools backed by built-in text functions
+  PERFORM ai.register_tool('up',  'uppercase', 'upper(text)'::regprocedure);
+  PERFORM ai.register_tool('rev', 'reverse',   'reverse(text)'::regprocedure);
+
+  IF ai.run_tool('up', 'hi') <> 'HI' THEN
+    RAISE EXCEPTION 'run_tool up failed: %', ai.run_tool('up','hi');
+  END IF;
+
+  -- workflow: uppercase then reverse  ('abc' -> 'ABC' -> 'CBA')
+  PERFORM ai.register_workflow('w', '[{"kind":"tool","tool":"up"},{"kind":"tool","tool":"rev"}]'::jsonb);
+  SELECT output INTO r FROM ai.run_workflow('w', 'abc') ORDER BY step DESC LIMIT 1;
+  IF r <> 'CBA' THEN
+    RAISE EXCEPTION 'run_workflow produced %, expected CBA', r;
+  END IF;
+
+  -- audit table exists and the opt-in GUC is readable
+  SELECT count(*) INTO n FROM ai.audit;
+  PERFORM set_config('pg_ai.audit', 'on', true);
+  IF current_setting('pg_ai.audit', true) <> 'on' THEN
+    RAISE EXCEPTION 'pg_ai.audit GUC not settable';
+  END IF;
+
+  RAISE NOTICE 'V2 runtime OK (tools, workflow=%, audit rows=%)', r, n;
+END $$;
+
 \echo '=== ALL SMOKE TESTS PASSED ==='

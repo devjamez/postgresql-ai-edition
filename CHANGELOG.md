@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versioning is [SemVer](https://semver.org/).
 
+## [0.6.0] — 2026-06-04
+
+### Added — synchronous V2 runtime
+- **Agent tools:** `ai.tools` registry + `ai.register_tool(name, description, handler regprocedure)` + `ai.run_tool(name, arg)` (executes a registered SQL `text->text` function) + `ai.call_agent_tools(agent, message, max_steps)` (ReAct loop: the model picks `TOOL <name> <arg>` or `ANSWER <text>`).
+- **Workflows:** `ai.workflows` registry + `ai.register_workflow(name, steps jsonb)` + `ai.run_workflow(name, input)` — ordered `tool`/`complete`/`rag` steps, each output feeds the next; returns the step trace.
+- **Audit log:** `ai.audit` table; opt-in via `SET pg_ai.audit = on`. `ai.complete` / `ai.complete_claude` log kind/model/prompt/response/latency (guarded — an audit failure never breaks the call).
+
+### Upgrade
+- `ALTER EXTENSION pg_ai UPDATE TO '0.6.0';`
+
 ## [0.5.1] — 2026-06-04
 
 ### Added — V2 M2 transparent fusion (opt-in)

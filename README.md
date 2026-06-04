@@ -97,6 +97,10 @@ Reset only the database (keeps the downloaded models):
 | `ai.search_mmr(emb, table, content_col, emb_col, k, fetch_n, lambda_weight) -> setof` | MMR reranking: relevance vs. diversity (no model call) |
 | `ai.create_agent(name, system_prompt, model) -> int` | Register an agent |
 | `ai.call_agent(name, message) -> text` | Call an agent (with memory) |
+| `ai.register_tool(name, desc, handler regprocedure)` / `ai.run_tool(name, arg)` | Register a SQL `text->text` function as a tool / run it |
+| `ai.call_agent_tools(agent, message, max_steps) -> text` | Agent loop that can call registered tools (ReAct) |
+| `ai.register_workflow(name, steps jsonb)` / `ai.run_workflow(name, input)` | Multi-step pipeline (`tool`/`complete`/`rag`), output chains to next |
+| `ai.audit` table + `SET pg_ai.audit = on` | Opt-in log of completions (model, prompt, response, latency) |
 
 Catalog: `ai.models`, `ai.agents`, `ai.agent_memory`.
 
