@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versioning is [SemVer](https://semver.org/).
 
+## [0.5.0] — 2026-06-04
+
+### Added
+- `ai.health() -> jsonb` — reports Ollama reachability, which models are present, and the active config. Revoked from `PUBLIC` (network function).
+
+### Upgrade
+- `ALTER EXTENSION pg_ai UPDATE TO '0.5.0';`
+
 ## [0.4.0] — 2026-06-04
 
 ### Added — RAG quality

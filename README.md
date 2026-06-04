@@ -84,6 +84,7 @@ Reset only the database (keeps the downloaded models):
 | `ai.embed(text) -> vector` | Embedding (Ollama `nomic-embed-text`, 768d) |
 | `ai.embed_batch(text[]) -> vector[]` | Embed many texts in one HTTP call |
 | `ai.embedding_dim() -> int` | Dimension of the current embedding model |
+| `ai.health() -> jsonb` | Provider reachability, models present, config (revoked from PUBLIC) |
 | `ai.complete(prompt, system, model) -> text` | Completion via Ollama (`llama3.1:8b`) |
 | `ai.complete_claude(prompt, system, model, max_tokens) -> text` | Completion via Anthropic (optional) |
 | `ai.similarity(a, b) -> float` | Cosine similarity in [0,1] |
@@ -130,7 +131,10 @@ It is built during the Docker image build (`postgresql-server-dev-16` + PGXS) an
 
 ## Docs
 
+- [Demo — real output](docs-ai/DEMO.md)
+- [FASE 1 — Anatomy of PostgreSQL 16](docs-ai/01-postgresql-anatomy.md)
 - [ADR-0001 — Extension vs. Fork](docs-ai/ADR-0001-extension-vs-fork.md)
+- [RFC-0001 — V2 relational+vector plan fusion](docs-ai/RFC-0001-v2-plan-fusion.md)
 - [Testing plan](docs-ai/TESTING.md)
 - [Publishing plan](docs-ai/PUBLISHING.md)
 - [Master architecture prompt](docs-ai/00-master-prompt.md)
