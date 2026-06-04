@@ -135,6 +135,7 @@ It is built during the Docker image build (`postgresql-server-dev-16` + PGXS) an
 - [FASE 1 — Anatomy of PostgreSQL 16](docs-ai/01-postgresql-anatomy.md)
 - [ADR-0001 — Extension vs. Fork](docs-ai/ADR-0001-extension-vs-fork.md)
 - [RFC-0001 — V2 relational+vector plan fusion](docs-ai/RFC-0001-v2-plan-fusion.md)
+- [RFC-0002 — Filtered HNSW (M2-recall) + partial-index recipe](docs-ai/RFC-0002-filtered-hnsw.md)
 - [Testing plan](docs-ai/TESTING.md)
 - [Publishing plan](docs-ai/PUBLISHING.md)
 - [Master architecture prompt](docs-ai/00-master-prompt.md)
