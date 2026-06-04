@@ -3,6 +3,25 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versioning is [SemVer](https://semver.org/).
 
+## [0.3.0] — 2026-06-04
+
+Hardening release.
+
+### Security
+- **Filters are now safe by default.** `ai.filter_ann` / `ai.filtered_search` take a `jsonb` of equality conditions, built with `format('%I = %L', ...)` (identifiers validated, values escaped) — no SQL injection. The raw-SQL-predicate path moved to `ai.filter_ann_raw` (advanced; **trusted input only**).
+- **Deny-by-default RBAC.** `EXECUTE` is revoked from `PUBLIC` on the powerful functions (`ai.embed`, `ai.embed_batch`, `ai.complete`, `ai.complete_claude`, `ai.filter_ann_raw`); a DBA grants them to trusted roles deliberately.
+
+### Added
+- `ai.embed_batch(text[]) -> vector[]` — embed many texts in **one** HTTP call.
+- `ai.embedding_dim() -> int` — dimension of the current embedding model.
+- `ai.rag(..., max_context int DEFAULT 4000)` — bounds the context size sent to the model.
+
+### Changed
+- Provider calls honor `AI_TIMEOUT` (seconds) and retry once on network failure.
+
+### Upgrade
+- `ALTER EXTENSION pg_ai UPDATE TO '0.3.0';`
+
 ## [0.2.0] — 2026-06-04
 
 ### Added

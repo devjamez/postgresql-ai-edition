@@ -93,11 +93,26 @@ BEGIN
   -- ~20 'rare' rows exist; ask for 10 nearest among them. Adaptive over-fetch
   -- must keep scanning past ef_search to find 10 that pass the filter.
   SELECT count(*) INTO n
-    FROM ai.filter_ann(qv, 'ann_t', 'cat', 'emb', 'cat = ''rare''', 10);
+    FROM ai.filter_ann(qv, 'ann_t', 'cat', 'emb', '{"cat": "rare"}'::jsonb, 10);
   IF n <> 10 THEN
     RAISE EXCEPTION 'filtered ANN returned % rows, expected 10', n;
   END IF;
   RAISE NOTICE 'filtered ANN over-fetch OK (% rows)', n;
+END $$;
+
+-- 6) RBAC: powerful (network / raw-SQL) functions are revoked from PUBLIC
+DO $$
+BEGIN
+  IF has_function_privilege('public', 'ai.embed(text)', 'execute') THEN
+    RAISE EXCEPTION 'ai.embed must not be executable by PUBLIC';
+  END IF;
+  IF has_function_privilege('public', 'ai.filter_ann_raw(vector,regclass,text,text,text,int)', 'execute') THEN
+    RAISE EXCEPTION 'ai.filter_ann_raw must not be executable by PUBLIC';
+  END IF;
+  IF NOT has_function_privilege('public', 'ai.similarity(vector,vector)', 'execute') THEN
+    RAISE EXCEPTION 'ai.similarity should be executable by PUBLIC';
+  END IF;
+  RAISE NOTICE 'RBAC deny-by-default OK';
 END $$;
 
 \echo '=== ALL SMOKE TESTS PASSED ==='

@@ -2,7 +2,7 @@
    "name": "pg_ai",
    "abstract": "PostgreSQL AI Edition: embeddings, semantic search, RAG and agents inside PostgreSQL",
    "description": "An installable PostgreSQL extension that adds embeddings, semantic search, retrieval-augmented generation (RAG), agents with memory, and filtered ANN search, orchestrating local (Ollama) or remote model APIs. Ships with pg_ai_core, a native C extension that integrates a planner hook and AI-workload telemetry into the engine.",
-   "version": "0.2.0",
+   "version": "0.3.0",
    "maintainer": [
       "Gaston Jamez <devjamez@gmail.com>"
    ],
@@ -12,7 +12,7 @@
          "abstract": "Embeddings, semantic search, RAG, agents, filtered ANN search",
          "file": "pg_ai/pg_ai--0.1.0.sql",
          "docfile": "README.md",
-         "version": "0.2.0"
+         "version": "0.3.0"
       },
       "pg_ai_core": {
          "abstract": "Native C planner-hook integration and AI-workload telemetry (V2 pilot)",

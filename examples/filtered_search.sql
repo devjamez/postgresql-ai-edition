@@ -24,15 +24,16 @@ CREATE INDEX IF NOT EXISTS articulos_emb_idx ON articulos USING hnsw (embedding 
 -- Semantic search WITHOUT a filter (everything ranked by similarity):
 SELECT content, round(distance::numeric, 3) AS dist
 FROM ai.filtered_search('entrenar modelos de inteligencia artificial',
-                        'articulos', 'titulo', 'embedding', 'true', 3);
+                        'articulos', 'titulo', 'embedding', '{}'::jsonb, 3);
 
 -- Same query, but FUSED with a relational filter (only category = 'hardware').
--- Adaptive over-fetch keeps pulling ANN candidates until 3 'hardware' rows pass,
--- instead of post-filtering a bounded candidate set and possibly under-returning:
+-- Filters are a safe jsonb of equality conditions (no SQL injection).
+-- Adaptive over-fetch keeps pulling ANN candidates until 3 'hardware' rows pass:
 SELECT content, round(distance::numeric, 3) AS dist
 FROM ai.filtered_search('entrenar modelos de inteligencia artificial',
                         'articulos', 'titulo', 'embedding',
-                        'categoria = ''hardware''', 3);
+                        '{"categoria": "hardware"}'::jsonb, 3);
 
 -- If you already have the query embedding, skip the model call with ai.filter_ann:
--- SELECT * FROM ai.filter_ann(ai.embed('...'), 'articulos','titulo','embedding','categoria=''software''', 5);
+-- SELECT * FROM ai.filter_ann(ai.embed('...'), 'articulos','titulo','embedding','{"categoria":"software"}'::jsonb, 5);
+-- For advanced predicates (ranges, LIKE), ai.filter_ann_raw(...) takes raw SQL (trusted input only).

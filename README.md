@@ -79,13 +79,16 @@ Reset only the database (keeps the downloaded models):
 | Function | Purpose |
 |---|---|
 | `ai.embed(text) -> vector` | Embedding (Ollama `nomic-embed-text`, 768d) |
+| `ai.embed_batch(text[]) -> vector[]` | Embed many texts in one HTTP call |
+| `ai.embedding_dim() -> int` | Dimension of the current embedding model |
 | `ai.complete(prompt, system, model) -> text` | Completion via Ollama (`llama3.1:8b`) |
 | `ai.complete_claude(prompt, system, model, max_tokens) -> text` | Completion via Anthropic (optional) |
 | `ai.similarity(a, b) -> float` | Cosine similarity in [0,1] |
 | `ai.semantic_match(emb, query, threshold) -> bool` | Convenience predicate (small tables only) |
 | `ai.rag(question, table, content_col, emb_col, k, model) -> text` | Retrieval-augmented answer |
-| `ai.filter_ann(emb, table, content_col, emb_col, filter_sql, k) -> setof` | Filtered ANN: relational filter + vector order + top-k (adaptive over-fetch) |
-| `ai.filtered_search(query, table, content_col, emb_col, filter_sql, k) -> setof` | `ai.filter_ann` with the query embedded for you |
+| `ai.filter_ann(emb, table, content_col, emb_col, filters jsonb, k) -> setof` | Filtered ANN: safe equality filters (jsonb) + vector order + top-k (adaptive over-fetch) |
+| `ai.filtered_search(query, table, content_col, emb_col, filters jsonb, k) -> setof` | `ai.filter_ann` with the query embedded for you |
+| `ai.filter_ann_raw(emb, table, content_col, emb_col, predicate, k) -> setof` | Advanced: raw SQL predicate (**trusted input only**; revoked from PUBLIC) |
 | `ai.create_agent(name, system_prompt, model) -> int` | Register an agent |
 | `ai.call_agent(name, message) -> text` | Call an agent (with memory) |
 
@@ -94,6 +97,8 @@ Catalog: `ai.models`, `ai.agents`, `ai.agent_memory`.
 ## Security
 
 - The default setup uses local Ollama and needs **no API key**. Any optional key (e.g. Anthropic) lives only in the **server environment** (`.env` → container env) — never in SQL, never in the repo. `.env` is gitignored.
+- **Filters are injection-safe**: `ai.filter_ann`/`ai.filtered_search` take a `jsonb` of equality conditions, escaped via `format %I/%L`. Raw SQL predicates are isolated in `ai.filter_ann_raw` (trusted input only).
+- **Deny-by-default**: `EXECUTE` on the network/raw functions (`ai.embed`, `ai.embed_batch`, `ai.complete*`, `ai.filter_ann_raw`) is revoked from `PUBLIC`; grant to trusted roles deliberately.
 - `ai.embed`/`ai.complete*` use the **untrusted** `plpython3u` language → only superusers can create them; grant `EXECUTE` deliberately.
 - Treat any text sent to `ai.complete`/`ai.rag` as untrusted input (prompt-injection surface). See [docs-ai/TESTING.md](docs-ai/TESTING.md) and the roadmap.
 
