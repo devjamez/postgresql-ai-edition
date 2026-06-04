@@ -47,7 +47,7 @@ Everything runs **inside PostgreSQL**. The thin layer (`pg_ai`) orchestrates a l
 
 ## Requirements
 
-- **Docker Desktop** (the only thing you must install).
+- **Docker Desktop** (the only thing you must install). Tested on **PostgreSQL 16 and 17**.
 - **~8 GB of free RAM** — the generation model runs locally on your machine.
 
 > No API key and no GPU required: inference runs locally via Ollama (`nomic-embed-text` + `llama3.1:8b`). An optional Anthropic key enables Claude-generated answers (`ai.complete_claude`). A smaller model (e.g. `llama3.2`) works if RAM is tight — set `AI_CHAT_MODEL` in `docker-compose.yml`.

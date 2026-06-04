@@ -8,7 +8,10 @@ services:
       - ollama_data:/root/.ollama
 
   db:
-    build: .
+    build:
+      context: .
+      args:
+        PG_VERSION: ${PG_VERSION:-16}
     container_name: pg_ai
     command: ["postgres", "-c", "shared_preload_libraries=pg_ai_core"]
     depends_on:

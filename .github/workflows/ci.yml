@@ -8,10 +8,16 @@ on:
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pg: [16, 17]
+    env:
+      PG_VERSION: ${{ matrix.pg }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build db image (compiles pg_ai_core C extension)
+      - name: Build db image (PostgreSQL ${{ matrix.pg }}, compiles pg_ai_core)
         run: docker compose build db
 
       - name: Start Postgres (without Ollama)

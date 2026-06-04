@@ -1,12 +1,14 @@
 # PostgreSQL AI Edition — pg_ai (thin) + pg_ai_core (V2 native C pilot)
-# Base: pgvector over PostgreSQL 16, plus PL/Python (untrusted) for HTTP calls.
-FROM pgvector/pgvector:pg16
+# Base: pgvector over PostgreSQL, plus PL/Python (untrusted) for HTTP calls.
+ARG PG_VERSION=16
+FROM pgvector/pgvector:pg${PG_VERSION}
+ARG PG_VERSION=16
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      postgresql-plpython3-16 \
+      postgresql-plpython3-${PG_VERSION} \
       build-essential \
-      postgresql-server-dev-16 \
+      postgresql-server-dev-${PG_VERSION} \
  && rm -rf /var/lib/apt/lists/*
 
 # Install the SQL extension (pg_ai)
