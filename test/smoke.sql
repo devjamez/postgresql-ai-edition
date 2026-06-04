@@ -226,4 +226,19 @@ BEGIN
   RAISE NOTICE 'async tool/workflow submission OK';
 END $$;
 
+-- 11) scheduling: tick_schedules enqueues due recurring schedules
+DO $$
+DECLARE fired int; before bigint; after bigint;
+BEGIN
+  PERFORM ai.register_tool('sch_up', 'uc', 'upper(text)'::regprocedure);
+  SELECT count(*) INTO before FROM ai.tasks;
+  PERFORM ai.schedule('s_test', 'tool', 'sch_up', 'x', interval '1 hour', now() - interval '1 minute');
+  fired := ai.tick_schedules();
+  IF fired < 1 THEN RAISE EXCEPTION 'tick_schedules fired % (expected >= 1)', fired; END IF;
+  SELECT count(*) INTO after FROM ai.tasks;
+  IF after <= before THEN RAISE EXCEPTION 'schedule did not enqueue a task'; END IF;
+  PERFORM ai.unschedule('s_test');
+  RAISE NOTICE 'scheduling OK (fired=%)', fired;
+END $$;
+
 \echo '=== ALL SMOKE TESTS PASSED ==='

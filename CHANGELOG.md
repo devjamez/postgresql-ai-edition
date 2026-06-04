@@ -3,6 +3,15 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versioning is [SemVer](https://semver.org/).
 
+## [0.9.0] — 2026-06-04
+
+### Added — scheduling (on top of the task worker)
+- **Delayed tasks:** `ai.tasks.run_at`; `ai.submit_task/submit_tool/submit_workflow(..., run_at timestamptz DEFAULT now())` — a task runs no earlier than `run_at`. The worker only claims due tasks.
+- **Recurring schedules:** `ai.schedules` + `ai.schedule(name, kind, target, input, period interval, first_run)` / `ai.unschedule(name)`. The worker calls `ai.tick_schedules()` each wake, enqueueing a task per due schedule and advancing `next_run` by `period`.
+
+### Upgrade
+- `ALTER EXTENSION pg_ai UPDATE TO '0.9.0';`
+
 ## [0.8.0] — 2026-06-04
 
 ### Added

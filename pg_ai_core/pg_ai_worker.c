@@ -43,7 +43,8 @@ process_one_task(void)
 	PushActiveSnapshot(GetTransactionSnapshot());
 
 	ret = SPI_execute(
-		"SELECT id, kind, agent, input FROM ai.tasks WHERE status = 'pending' "
+		"SELECT id, kind, agent, input FROM ai.tasks "
+		"WHERE status = 'pending' AND run_at <= now() "
 		"ORDER BY id FOR UPDATE SKIP LOCKED LIMIT 1", false, 1);
 
 	if (ret == SPI_OK_SELECT && SPI_processed == 1)
@@ -111,6 +112,20 @@ process_one_task(void)
 	return found;
 }
 
+/* Fire due recurring schedules (enqueues tasks). */
+static void
+run_schedules(void)
+{
+	SetCurrentStatementStartTimestamp();
+	StartTransactionCommand();
+	SPI_connect();
+	PushActiveSnapshot(GetTransactionSnapshot());
+	SPI_execute("SELECT ai.tick_schedules()", false, 0);
+	SPI_finish();
+	PopActiveSnapshot();
+	CommitTransactionCommand();
+}
+
 void
 pg_ai_worker_main(Datum main_arg)
 {
@@ -139,9 +154,10 @@ pg_ai_worker_main(Datum main_arg)
 			ProcessConfigFile(PGC_SIGHUP);
 		}
 
-		/* process up to 10 pending tasks per wake; tolerate transient errors */
+		/* fire due schedules, then process pending tasks; tolerate transient errors */
 		PG_TRY();
 		{
+			run_schedules();
 			for (n = 0; n < 10; n++)
 			{
 				if (!process_one_task())

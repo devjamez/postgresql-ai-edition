@@ -102,7 +102,8 @@ Reset only the database (keeps the downloaded models):
 | `ai.register_workflow(name, steps jsonb)` / `ai.run_workflow(name, input)` | Multi-step pipeline (`tool`/`complete`/`rag`), output chains to next |
 | `ai.audit` table + `SET pg_ai.audit = on` | Opt-in log of completions (model, prompt, response, latency) |
 | `ai.rerank(query, table, content_col, emb_col, k, fetch_n) -> setof` | LLM reranker (listwise): retrieve by ANN, then the model orders the top-k |
-| `ai.submit_task/submit_tool/submit_workflow(target, input) -> bigint` + `ai.task_status/task_result(id)` | Async agent / tool / workflow runs via a queue drained by the `pg_ai_core` background worker (`pg_ai_core.enable_worker=on`) |
+| `ai.submit_task/submit_tool/submit_workflow(target, input, run_at)` + `ai.task_status/task_result(id)` | Async (optionally delayed) agent/tool/workflow runs via a queue drained by the `pg_ai_core` background worker |
+| `ai.schedule(name, kind, target, input, period, first_run)` / `ai.unschedule(name)` | Recurring scheduled runs (cron-like); the worker fires due schedules each wake |
 
 Catalog: `ai.models`, `ai.agents`, `ai.agent_memory`.
 
