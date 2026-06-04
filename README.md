@@ -23,6 +23,28 @@ SELECT ai.create_agent('asesor', 'Sos un asesor de compras. Respondé corto.');
 SELECT ai.call_agent('asesor', 'busco una laptop para programar');
 ```
 
+**→ See [docs-ai/DEMO.md](docs-ai/DEMO.md) for real output** (semantic search, RAG, agent memory, filtered fusion).
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Q["SQL: ai.rag / ai.filtered_search"] --> EMB["ai.embed → Ollama"]
+  EMB --> IDX[("pgvector index (HNSW)")]
+  IDX --> RANK["rank + relational filter (top-k)"]
+  RANK --> CTX["build context"]
+  CTX --> GEN["ai.complete → Ollama (llama3.1:8b)"]
+  GEN --> ANS["answer / rows"]
+  subgraph core["pg_ai_core (native C)"]
+    PH["planner_hook"]
+    TEL["shared-memory telemetry"]
+    CS["pg_ai_fusion custom scan"]
+  end
+  PH -.observes.-> Q
+```
+
+Everything runs **inside PostgreSQL**. The thin layer (`pg_ai`) orchestrates a local model via PL/Python; `pg_ai_core` integrates with the engine in C. No external service, no API key.
+
 ## Requirements
 
 - **Docker Desktop** (the only thing you must install).
