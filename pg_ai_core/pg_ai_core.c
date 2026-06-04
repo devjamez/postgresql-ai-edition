@@ -132,6 +132,9 @@ pg_ai_core_reset(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+/* defined in pg_ai_fusion.c */
+extern void pg_ai_fusion_init(void);
+
 void _PG_init(void);
 
 void
@@ -158,5 +161,8 @@ _PG_init(void)
 	prev_planner_hook = planner_hook;
 	planner_hook = pg_ai_planner;
 
-	elog(LOG, "pg_ai_core: planner hook + shmem telemetry installed");
+	/* register the V2 fusion custom-scan provider */
+	pg_ai_fusion_init();
+
+	elog(LOG, "pg_ai_core: planner hook + shmem telemetry + fusion provider installed");
 }

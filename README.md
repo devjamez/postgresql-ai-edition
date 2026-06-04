@@ -78,14 +78,18 @@ Beyond the SQL/Python thin layer, `pg_ai_core/` is a **compiled C extension** th
 
 - Installs a **`planner_hook`** that intercepts AI-semantic queries at plan time (the mechanism for future relational + vector plan fusion).
 - Keeps **cluster-wide telemetry in shared memory**: how many statements are planned vs. how many are AI-semantic.
+- Provides a **Custom Scan provider** (`pg_ai_fusion`) registered via `set_rel_pathlist_hook` — the executable foundation for relational + vector plan fusion (see [docs-ai/RFC-0001](docs-ai/RFC-0001-v2-plan-fusion.md)). Opt-in per session:
 
 ```sql
 SELECT pg_ai_core_version();
 SELECT * FROM pg_ai_core_stats();   -- planned | ai_intercepted
 SELECT pg_ai_core_reset();
+
+SET pg_ai_core.fuse = on;           -- route base-table scans through the fusion node
+EXPLAIN SELECT * FROM docs WHERE category = 'x';   -- Custom Scan (pg_ai_fusion)
 ```
 
-It is built during the Docker image build (`postgresql-server-dev-16` + PGXS) and loaded via `shared_preload_libraries=pg_ai_core`. This is a pilot: it *detects and measures*; rewriting the plan is the next milestone.
+It is built during the Docker image build (`postgresql-server-dev-16` + PGXS) and loaded via `shared_preload_libraries=pg_ai_core`. **Status:** the custom scan node executes correctly and is chosen by the planner (M1 step 1); adaptive over-fetch + filtering for the `filter + ORDER BY <dist> LIMIT k` pattern is the next step.
 
 ## Docs
 

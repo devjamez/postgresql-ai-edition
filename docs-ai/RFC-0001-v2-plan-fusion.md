@@ -60,7 +60,7 @@ This uses **only the public extension API** (Custom Scan + `set_rel_pathlist_hoo
 
 | # | Goal | API surface | Risk / effort |
 |---|---|---|---|
-| **M1** | CustomScan that does **adaptive over-fetch + filter + top-k** for the pattern; cost-calibrated so it's chosen | public CustomScan + `set_rel_pathlist_hook` + child ANN index scan | Moderate. Achievable solo. The first real "fused plan node". |
+| **M1** | CustomScan that does **adaptive over-fetch + filter + top-k** for the pattern; cost-calibrated so it's chosen | public CustomScan + `set_rel_pathlist_hook` + child ANN index scan | Moderate. Achievable solo. The first real "fused plan node". **Step 1 DONE:** `pg_ai_fusion` custom scan provider built, executes correctly, chosen by planner (opt-in GUC `pg_ai_core.fuse`); over-fetch+filter logic is the remaining step. |
 | **M2** | Push the filter **into** the ANN traversal (true pre-filtering / better recall) | requires pgvector internals (`hnswscan.c` traversal) or a vendored fork | High. Touches another project's internals; bigger. |
 | **M3** | Cost model for filtered-ANN + optional native types | core costing + type system | High; this is where a team is realistically needed. |
 

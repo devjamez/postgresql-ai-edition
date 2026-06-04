@@ -45,4 +45,34 @@ BEGIN
   RAISE NOTICE 'planner-hook telemetry OK (intercepted=%)', i;
 END $$;
 
+-- 4) V2 fusion custom scan (no Ollama needed)
+CREATE TEMP TABLE fusion_t (id int);
+INSERT INTO fusion_t SELECT generate_series(1, 100);
+
+DO $$
+DECLARE
+  c     bigint;
+  line  text;
+  found boolean := false;
+BEGIN
+  SET pg_ai_core.fuse = on;
+
+  -- correctness: result via the custom scan must match the real answer
+  SELECT count(*) INTO c FROM fusion_t WHERE id > 50;
+  IF c <> 50 THEN
+    RAISE EXCEPTION 'fusion custom scan returned wrong count: %', c;
+  END IF;
+
+  -- the planner must actually pick our node
+  FOR line IN EXECUTE 'EXPLAIN SELECT count(*) FROM fusion_t WHERE id > 50' LOOP
+    IF position('pg_ai_fusion' in line) > 0 THEN found := true; END IF;
+  END LOOP;
+  IF NOT found THEN
+    RAISE EXCEPTION 'pg_ai_fusion custom scan was not chosen';
+  END IF;
+
+  SET pg_ai_core.fuse = off;
+  RAISE NOTICE 'fusion custom scan OK (count=% , node chosen)', c;
+END $$;
+
 \echo '=== ALL SMOKE TESTS PASSED ==='
