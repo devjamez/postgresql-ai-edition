@@ -13,7 +13,7 @@ services:
       args:
         PG_VERSION: ${PG_VERSION:-16}
     container_name: pg_ai
-    command: ["postgres", "-c", "shared_preload_libraries=pg_ai_core"]
+    command: ["postgres", "-c", "shared_preload_libraries=pg_ai_core", "-c", "pg_ai_core.enable_worker=on"]
     depends_on:
       - ollama
     environment:

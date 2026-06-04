@@ -203,4 +203,20 @@ BEGIN
   RAISE NOTICE 'V2 runtime OK (tools, workflow=%, audit rows=%)', r, n;
 END $$;
 
+-- 10) async task queue plumbing (worker processing needs the runtime/Ollama)
+DO $$
+DECLARE tid bigint; st text;
+BEGIN
+  PERFORM ai.create_agent('qtest', 'queue test agent');
+  tid := ai.submit_task('qtest', 'ping');
+  IF tid IS NULL OR tid < 1 THEN
+    RAISE EXCEPTION 'submit_task did not return an id';
+  END IF;
+  st := ai.task_status(tid);
+  IF st NOT IN ('pending','running','done','error') THEN
+    RAISE EXCEPTION 'unexpected task status: %', st;
+  END IF;
+  RAISE NOTICE 'async queue OK (task=%, status=%)', tid, st;
+END $$;
+
 \echo '=== ALL SMOKE TESTS PASSED ==='

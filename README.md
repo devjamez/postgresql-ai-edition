@@ -101,6 +101,7 @@ Reset only the database (keeps the downloaded models):
 | `ai.call_agent_tools(agent, message, max_steps) -> text` | Agent loop that can call registered tools (ReAct) |
 | `ai.register_workflow(name, steps jsonb)` / `ai.run_workflow(name, input)` | Multi-step pipeline (`tool`/`complete`/`rag`), output chains to next |
 | `ai.audit` table + `SET pg_ai.audit = on` | Opt-in log of completions (model, prompt, response, latency) |
+| `ai.submit_task(agent, input) -> bigint` / `ai.task_status(id)` / `ai.task_result(id)` | Async agent runs via a queue drained by the `pg_ai_core` background worker (`pg_ai_core.enable_worker=on`) |
 
 Catalog: `ai.models`, `ai.agents`, `ai.agent_memory`.
 

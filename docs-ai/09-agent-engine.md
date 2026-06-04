@@ -21,7 +21,7 @@ SELECT ai.call_agent('asesor', '¿y para jugar también?');   -- remembers the p
 | **AGENT TOOLS** | register PG functions as tools in `ai.tools`; the agent loop asks the model which tool to call (function-calling), executes it, feeds the result back. Tool execution = ordinary function calls under the caller's privileges. |
 | **AGENT WORKFLOWS** | a DAG of agent/tool steps in `ai.workflows`; executed step-by-step, state in a table. |
 | **AGENT COMMUNICATION (A2A)** | one agent calling `ai.call_agent` on another; shared memory tables for hand-off. |
-| **AGENT EVENTS / TASKS** | an `ai.tasks` queue drained by a **background worker** (FASE 1 §4 / FASE 7) for async, long-running, or scheduled agent runs — without blocking user backends. |
+| **AGENT EVENTS / TASKS** | ✅ **SHIPPED (0.7.0):** `ai.tasks` queue + `ai.submit_task`/`task_status`/`task_result`, drained by the `pg_ai_core` **background worker** (native C; opt-in `pg_ai_core.enable_worker`). Async agent runs that don't block user backends — exactly the FASE 1 §4 bgworker design. |
 
 ## Why memory-first
 Memory + a clean `call_agent` loop is the irreducible core; tools/workflows/async are layers on top. Shipping the core proves the model and keeps the surface honest. The deferred pieces all converge on two primitives already designed: a **task table/queue** and a **background worker**.

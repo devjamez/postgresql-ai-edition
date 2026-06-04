@@ -14,6 +14,7 @@
 #include "miscadmin.h"
 #include "optimizer/planner.h"
 #include "port/atomics.h"
+#include "postmaster/bgworker.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
@@ -42,6 +43,11 @@ static ExecutorStart_hook_type prev_ExecutorStart_hook = NULL;
 /* GUCs */
 static bool pg_ai_notice = true;
 static bool pg_ai_auto_fuse = false;
+
+/* async task worker GUCs (pg_ai_task_db / pg_ai_worker_naptime used by pg_ai_worker.c) */
+static bool pg_ai_enable_worker = false;
+char	   *pg_ai_task_db = NULL;
+int			pg_ai_worker_naptime = 5;
 
 static bool
 query_is_ai_semantic(const char *q)
@@ -232,6 +238,37 @@ _PG_init(void)
 
 	/* register the V2 fusion custom-scan provider */
 	pg_ai_fusion_init();
+
+	/* async task worker (opt-in) */
+	DefineCustomBoolVariable("pg_ai_core.enable_worker",
+							 "Run the background worker that drains the ai.tasks queue.",
+							 NULL, &pg_ai_enable_worker, false,
+							 PGC_POSTMASTER, 0, NULL, NULL, NULL);
+	DefineCustomStringVariable("pg_ai_core.task_db",
+							   "Database the task worker connects to.",
+							   NULL, &pg_ai_task_db, "pgai",
+							   PGC_POSTMASTER, 0, NULL, NULL, NULL);
+	DefineCustomIntVariable("pg_ai_core.worker_naptime",
+							"Seconds the task worker sleeps between polls.",
+							NULL, &pg_ai_worker_naptime, 5, 1, 3600,
+							PGC_SIGHUP, 0, NULL, NULL, NULL);
+
+	if (pg_ai_enable_worker)
+	{
+		BackgroundWorker bw;
+
+		memset(&bw, 0, sizeof(bw));
+		bw.bgw_flags = BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION;
+		bw.bgw_start_time = BgWorkerStart_RecoveryFinished;
+		bw.bgw_restart_time = 5;
+		snprintf(bw.bgw_library_name, BGW_MAXLEN, "pg_ai_core");
+		snprintf(bw.bgw_function_name, BGW_MAXLEN, "pg_ai_worker_main");
+		snprintf(bw.bgw_name, BGW_MAXLEN, "pg_ai task worker");
+		snprintf(bw.bgw_type, BGW_MAXLEN, "pg_ai task worker");
+		bw.bgw_main_arg = (Datum) 0;
+		bw.bgw_notify_pid = 0;
+		RegisterBackgroundWorker(&bw);
+	}
 
 	elog(LOG, "pg_ai_core: planner hook + shmem telemetry + fusion provider installed");
 }

@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versioning is [SemVer](https://semver.org/).
 
+## [0.7.0] — 2026-06-04
+
+### Added — async agent runtime
+- **Task queue:** `ai.tasks` + `ai.submit_task(agent, input) -> bigint` + `ai.task_status(id)` + `ai.task_result(id)`.
+- **Background worker** (`pg_ai_core`, native C): drains the queue, runs each task's agent asynchronously (one transaction per task; the agent call is isolated in a subtransaction so a failing task is marked `error` and never crashes the worker). Opt-in via `pg_ai_core.enable_worker=on` (+ `pg_ai_core.task_db`, `pg_ai_core.worker_naptime`). Enabled by default in the Docker stack.
+- Verified end-to-end: submit → worker processes → `done` with the agent's answer (worker idle when the queue is empty).
+
+### Upgrade
+- `ALTER EXTENSION pg_ai UPDATE TO '0.7.0';` (and set `pg_ai_core.enable_worker=on` to run the worker).
+
 ## [0.6.0] — 2026-06-04
 
 ### Added — synchronous V2 runtime

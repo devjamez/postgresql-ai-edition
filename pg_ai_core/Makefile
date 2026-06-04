@@ -1,5 +1,5 @@
 MODULE_big = pg_ai_core
-OBJS = pg_ai_core.o pg_ai_fusion.o
+OBJS = pg_ai_core.o pg_ai_fusion.o pg_ai_worker.o
 
 EXTENSION = pg_ai_core
 DATA = pg_ai_core--0.1.0.sql pg_ai_core--0.1.0--0.2.0.sql

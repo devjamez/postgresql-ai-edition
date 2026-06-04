@@ -16,7 +16,7 @@ The registries and engines that turn the catalog into behavior.
 ## Where the runtime runs
 
 - **Today:** synchronously, inside the calling backend, via `plpython3u` HTTP calls to the model provider (Ollama local / Anthropic). Simple, transactional, no extra process.
-- **Designed (for tools/workflows/async agents):** a **background worker** + **shared-memory queue** — exactly the pattern documented in [FASE 1](01-postgresql-anatomy.md) §4 (`RegisterBackgroundWorker`, `shmem_request_hook`, `BackgroundWorkerInitializeConnection`). A worker would: poll a shmem/`ai.tasks` queue, run multi-step workflows, call tools/other agents, write results back — without blocking the user's backend. `pg_ai_core` already owns the shmem machinery this needs.
+- **Async runtime — ✅ SHIPPED (0.7.0):** a native-C **background worker** in `pg_ai_core` drains the `ai.tasks` queue (`ai.submit_task`/`task_status`/`task_result`), running each task's agent without blocking the user's backend — the FASE 1 §4 bgworker design (`RegisterBackgroundWorker`, `BackgroundWorkerInitializeConnection`). Opt-in via `pg_ai_core.enable_worker`. Tools and workflows (0.6.0) run synchronously today; running them *through* the queue is a small additive step on this worker.
 
 ## Inference location (configurable)
 `OLLAMA_URL` / `AI_EMBED_MODEL` / `AI_CHAT_MODEL` / `AI_TIMEOUT` (env) select the backend. Default local Ollama (no key); optional Anthropic via `ANTHROPIC_API_KEY`. Swapping to self-hosted vLLM or other OpenAI-compatible endpoints is a provider-function change only.
