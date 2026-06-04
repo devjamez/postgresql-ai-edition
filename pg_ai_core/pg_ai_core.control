@@ -1,5 +1,5 @@
 # pg_ai_core — native C planner integration pilot (V2)
 comment = 'PostgreSQL AI Edition: native C planner-hook integration + AI-workload telemetry (V2 pilot)'
-default_version = '0.1.0'
+default_version = '0.2.0'
 module_pathname = '$libdir/pg_ai_core'
 relocatable = true

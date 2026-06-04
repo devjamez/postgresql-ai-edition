@@ -61,7 +61,7 @@ This uses **only the public extension API** (Custom Scan + `set_rel_pathlist_hoo
 | # | Goal | API surface | Risk / effort |
 |---|---|---|---|
 | **M1** | Filtered ANN: relational filter + vector order + top-k with adaptive over-fetch | implemented | **DONE.** Step 1: `pg_ai_fusion` Custom Scan provider (C) — executes, chosen by planner, opt-in GUC `pg_ai_core.fuse`. Step 2: `ai.filter_ann` / `ai.filtered_search` (pg_ai 0.2.0) — over-fetch via pgvector's `hnsw.iterative_scan=strict_order`. Key insight: pgvector 0.8 already exposes the iterative-scan budget, so **no engine fork is needed** for correct filtered top-k. |
-| **M2** | **Transparent** fusion: plain `WHERE quals ORDER BY emb <=> $1 LIMIT k` auto-optimized (no special function), and/or pushing the filter into the ANN traversal for better recall | planner/executor hooks (auto-enable iterative scan for the detected pattern) and/or pgvector internals (`hnswscan.c`) | High. The transparent auto-enable means manipulating `hnsw.iterative_scan` scoped to one query — do it at `ExecutorStart_hook`/`ExecutorEnd_hook` with `NewGUCNestLevel()` + `AtEOXact_GUC()` (the `auto_explain` pattern) so it never leaks to other queries. Reliable pattern detection on the plan + safe GUC scoping is the risk. Recommended as a team/contributor task. |
+| **M2** | **Transparent** fusion: plain `WHERE quals ORDER BY emb <=> $1 LIMIT k` auto-optimized (no special function), and/or pushing the filter into the ANN traversal for better recall | planner/executor hooks (auto-enable iterative scan for the detected pattern) and/or pgvector internals (`hnswscan.c`) | **Detection DONE** (read-only): `pg_ai_core` counts fusion candidates in shared memory (`pg_ai_core_stats().fusion_candidates`). **Auto-apply DEFERRED** (the risky half): scope `hnsw.iterative_scan` to one query at `ExecutorStart_hook`/`ExecutorEnd_hook` with `NewGUCNestLevel()` + `AtEOXact_GUC()` (the `auto_explain` pattern) so it never leaks. Deliberately NOT shipped unattended — a GUC-scoping bug would regress other queries on a shared DB. Contributor task. |
 | **M3** | Cost model for filtered-ANN + optional native types | core costing + type system | High; this is where a team is realistically needed. |
 
 **M1 is DONE** (filtered ANN via `ai.filter_ann`/`ai.filtered_search` + the C custom-scan foundation). **M2/M3 are real engine work that strain a solo timeline** — designed here, not built. The honest reason M1 landed without a fork: pgvector 0.8's `hnsw.iterative_scan` already provides the adaptive candidate budget that the "fusion" needs; the remaining M2 value is *transparency* (no special function) and *recall* (filter inside the graph walk), both of which warrant a contributor with PG C depth.
@@ -78,6 +78,13 @@ This uses **only the public extension API** (Custom Scan + `set_rel_pathlist_hoo
 - Plan choice: `EXPLAIN` shows the custom node chosen for the pattern.
 - Perf: fewer rows scanned vs. post-filtering at low selectivity (`EXPLAIN ANALYZE`).
 - Add the above to `test/`.
+
+## 8. Scope decisions (what was built vs. deferred, and why)
+
+- **M1 — built & shipped.** Filtered ANN with adaptive over-fetch (`ai.filter_ann`/`ai.filtered_search`, pg_ai ≥0.3.0) + the `pg_ai_fusion` Custom Scan foundation (`pg_ai_core`).
+- **M2 detection — built.** Read-only planner detection of the fusion pattern + shared-memory telemetry. Zero execution risk.
+- **M2 auto-apply — deferred by decision.** Transparently enabling `hnsw.iterative_scan` per query requires GUC manipulation around execution. The correct pattern is known (`auto_explain`-style nest-level save/restore), but a bug regresses *other* queries on a shared database. It was deliberately not shipped in an unattended/autonomous setting; it needs a developer who can validate it under load. The capability it would automate is already available explicitly via `ai.filter_ann`.
+- **M3 — deferred by decision.** Native types (`VECTOR`/`AGENT` as first-class C types) and a filtered-ANN cost model are multi-month, team-scale C work that breaks the "no fork / max compatibility" stance if done naively. Out of scope for a solo/autonomous effort; documented here as the long-horizon direction.
 
 ## 7. Notes
 Research was done against local clones at `c:\develone\pgsrc` (PostgreSQL 16) and `c:\develone\pgvector-src` (pgvector), kept out of this repo. They are the reference for implementing M1.

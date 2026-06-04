@@ -27,6 +27,7 @@ typedef struct PgAiCoreShared
 {
 	pg_atomic_uint64 planned;		/* total statements planned */
 	pg_atomic_uint64 intercepted;	/* AI-semantic statements intercepted */
+	pg_atomic_uint64 fusion;		/* filtered-ANN fusion candidates seen */
 } PgAiCoreShared;
 
 static PgAiCoreShared *pgais = NULL;
@@ -51,6 +52,22 @@ query_is_ai_semantic(const char *q)
 			strstr(q, "ai.call_agent") != NULL);
 }
 
+/*
+ * Heuristic detection of the relational-filter + vector-order + limit pattern
+ * (the target of transparent plan fusion). Read-only: used only for telemetry.
+ */
+static bool
+query_is_fusion_candidate(const char *q)
+{
+	if (q == NULL)
+		return false;
+
+	if (strstr(q, "<=>") == NULL && strstr(q, "<->") == NULL && strstr(q, "<#>") == NULL)
+		return false;
+
+	return (strcasestr(q, "where") != NULL && strcasestr(q, "limit") != NULL);
+}
+
 static PlannedStmt *
 pg_ai_planner(Query *parse, const char *query_string,
 			  int cursorOptions, ParamListInfo boundParams)
@@ -65,6 +82,9 @@ pg_ai_planner(Query *parse, const char *query_string,
 		if (pg_ai_notice)
 			elog(NOTICE, "pg_ai_core: AI-semantic query intercepted at planner level");
 	}
+
+	if (pgais != NULL && query_is_fusion_candidate(query_string))
+		pg_atomic_fetch_add_u64(&pgais->fusion, 1);
 
 	if (prev_planner_hook)
 		return prev_planner_hook(parse, query_string, cursorOptions, boundParams);
@@ -94,6 +114,7 @@ pg_ai_shmem_startup(void)
 	{
 		pg_atomic_init_u64(&pgais->planned, 0);
 		pg_atomic_init_u64(&pgais->intercepted, 0);
+		pg_atomic_init_u64(&pgais->fusion, 0);
 	}
 	LWLockRelease(AddinShmemInitLock);
 }
@@ -103,7 +124,7 @@ Datum
 pg_ai_core_version(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_TEXT_P(cstring_to_text(
-		"pg_ai_core 0.1.0 (native C planner hook + shared-memory telemetry)"));
+		"pg_ai_core 0.2.0 (native C planner hook + shared-memory telemetry + fusion detection)"));
 }
 
 PG_FUNCTION_INFO_V1(pg_ai_core_planned);
@@ -120,6 +141,13 @@ pg_ai_core_intercepted(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(pgais ? (int64) pg_atomic_read_u64(&pgais->intercepted) : 0);
 }
 
+PG_FUNCTION_INFO_V1(pg_ai_core_fusion_candidates);
+Datum
+pg_ai_core_fusion_candidates(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgais ? (int64) pg_atomic_read_u64(&pgais->fusion) : 0);
+}
+
 PG_FUNCTION_INFO_V1(pg_ai_core_reset);
 Datum
 pg_ai_core_reset(PG_FUNCTION_ARGS)
@@ -128,6 +156,7 @@ pg_ai_core_reset(PG_FUNCTION_ARGS)
 	{
 		pg_atomic_write_u64(&pgais->planned, 0);
 		pg_atomic_write_u64(&pgais->intercepted, 0);
+		pg_atomic_write_u64(&pgais->fusion, 0);
 	}
 	PG_RETURN_VOID();
 }

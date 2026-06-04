@@ -115,7 +115,7 @@ Beyond the SQL/Python thin layer, `pg_ai_core/` is a **compiled C extension** th
 
 ```sql
 SELECT pg_ai_core_version();
-SELECT * FROM pg_ai_core_stats();   -- planned | ai_intercepted
+SELECT * FROM pg_ai_core_stats();   -- planned | ai_intercepted | fusion_candidates
 SELECT pg_ai_core_reset();
 
 SET pg_ai_core.fuse = on;           -- route base-table scans through the fusion node

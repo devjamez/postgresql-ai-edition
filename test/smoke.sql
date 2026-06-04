@@ -100,6 +100,17 @@ BEGIN
   RAISE NOTICE 'filtered ANN over-fetch OK (% rows)', n;
 END $$;
 
+-- 5b) fusion-candidate detection (planner saw the filter+vector+limit pattern)
+DO $$
+DECLARE f bigint;
+BEGIN
+  SELECT fusion_candidates INTO f FROM pg_ai_core_stats();
+  IF f < 1 THEN
+    RAISE EXCEPTION 'fusion-candidate detection did not fire (%)', f;
+  END IF;
+  RAISE NOTICE 'fusion-candidate detection OK (%)', f;
+END $$;
+
 -- 6) RBAC: powerful (network / raw-SQL) functions are revoked from PUBLIC
 DO $$
 BEGIN
