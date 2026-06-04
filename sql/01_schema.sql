@@ -10,7 +10,7 @@ CREATE SCHEMA IF NOT EXISTS ai;
 CREATE TABLE IF NOT EXISTS ai.models (
     id         serial PRIMARY KEY,
     name       text UNIQUE NOT NULL,
-    provider   text NOT NULL CHECK (provider IN ('openai','anthropic')),
+    provider   text NOT NULL CHECK (provider IN ('ollama','openai','anthropic')),
     kind       text NOT NULL CHECK (kind IN ('embedding','completion')),
     model_id   text NOT NULL,
     dimensions int,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS ai.models (
 );
 
 INSERT INTO ai.models (name, provider, kind, model_id, dimensions) VALUES
-    ('default-embedding',  'openai',    'embedding',  'text-embedding-3-small', 1536),
-    ('default-completion', 'openai',    'completion', 'gpt-4o-mini',            NULL),
-    ('claude',             'anthropic', 'completion', 'claude-sonnet-4-6',      NULL)
+    ('default-embedding',  'ollama',    'embedding',  'nomic-embed-text',  768),
+    ('default-completion', 'ollama',    'completion', 'llama3.2',          NULL),
+    ('claude',             'anthropic', 'completion', 'claude-sonnet-4-6', NULL)
 ON CONFLICT (name) DO NOTHING;

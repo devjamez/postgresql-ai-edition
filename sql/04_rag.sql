@@ -7,7 +7,7 @@ CREATE OR REPLACE FUNCTION ai.rag(
     content_column   text,
     embedding_column text,
     k                int  DEFAULT 5,
-    model            text DEFAULT 'gpt-4o-mini'
+    model            text DEFAULT NULL
 ) RETURNS text
 LANGUAGE plpgsql AS $$
 DECLARE

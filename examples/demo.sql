@@ -1,13 +1,12 @@
 -- PostgreSQL AI Edition — demo
--- Run after the stack is up:
---   docker compose exec -T db psql -U postgres -d pgai -f - < examples/demo.sql
--- or from psql:  \i examples/demo.sql
+-- Run after the stack is up and models are pulled:
+--   docker compose exec -T db psql -U postgres -d pgai < examples/demo.sql
 
 CREATE TABLE IF NOT EXISTS productos (
     id          serial PRIMARY KEY,
     nombre      text,
     descripcion text,
-    embedding   vector(1536)
+    embedding   vector(768)
 );
 
 INSERT INTO productos (nombre, descripcion) VALUES

@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS ai.agents (
     id            serial PRIMARY KEY,
     name          text UNIQUE NOT NULL,
     system_prompt text NOT NULL,
-    model         text NOT NULL DEFAULT 'gpt-4o-mini',
+    model         text NOT NULL DEFAULT 'llama3.2',
     created_at    timestamptz NOT NULL DEFAULT now()
 );
 
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS ai.agent_memory (
 );
 CREATE INDEX IF NOT EXISTS agent_memory_agent_idx ON ai.agent_memory(agent_id, id);
 
-CREATE OR REPLACE FUNCTION ai.create_agent(name text, system_prompt text, model text DEFAULT 'gpt-4o-mini')
+CREATE OR REPLACE FUNCTION ai.create_agent(name text, system_prompt text, model text DEFAULT 'llama3.2')
 RETURNS int
 LANGUAGE sql AS $$
     INSERT INTO ai.agents(name, system_prompt, model)

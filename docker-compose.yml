@@ -1,13 +1,26 @@
 services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pg_ai_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
   db:
     build: .
     container_name: pg_ai
+    depends_on:
+      - ollama
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: pgai
-      # Read from your .env file. Never commit real keys.
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # Local inference via Ollama — no API key required.
+      OLLAMA_URL: http://ollama:11434
+      AI_EMBED_MODEL: nomic-embed-text
+      AI_CHAT_MODEL: llama3.2
+      # Optional: only if you want Claude to generate answers (ai.complete_claude).
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
       - "5432:5432"
@@ -16,4 +29,5 @@ services:
       - pgai_data:/var/lib/postgresql/data
 
 volumes:
+  ollama_data:
   pgai_data:
