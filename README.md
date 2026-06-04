@@ -68,6 +68,21 @@ Catalog: `ai.models`, `ai.agents`, `ai.agent_memory`.
 - `ai.embed`/`ai.complete*` use the **untrusted** `plpython3u` language → only superusers can create them; grant `EXECUTE` deliberately.
 - Treat any text sent to `ai.complete`/`ai.rag` as untrusted input (prompt-injection surface). See [docs-ai/TESTING.md](docs-ai/TESTING.md) and the roadmap.
 
+## V2 pilot — native C engine integration (`pg_ai_core`)
+
+Beyond the SQL/Python thin layer, `pg_ai_core/` is a **compiled C extension** that integrates with PostgreSQL internals — the first step toward "intelligence inside the engine":
+
+- Installs a **`planner_hook`** that intercepts AI-semantic queries at plan time (the mechanism for future relational + vector plan fusion).
+- Keeps **cluster-wide telemetry in shared memory**: how many statements are planned vs. how many are AI-semantic.
+
+```sql
+SELECT pg_ai_core_version();
+SELECT * FROM pg_ai_core_stats();   -- planned | ai_intercepted
+SELECT pg_ai_core_reset();
+```
+
+It is built during the Docker image build (`postgresql-server-dev-16` + PGXS) and loaded via `shared_preload_libraries=pg_ai_core`. This is a pilot: it *detects and measures*; rewriting the plan is the next milestone.
+
 ## Docs
 
 - [ADR-0001 — Extension vs. Fork](docs-ai/ADR-0001-extension-vs-fork.md)
