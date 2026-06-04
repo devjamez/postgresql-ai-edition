@@ -10,6 +10,7 @@ services:
   db:
     build: .
     container_name: pg_ai
+    command: ["postgres", "-c", "shared_preload_libraries=pg_ai_core"]
     depends_on:
       - ollama
     environment:
