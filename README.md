@@ -92,7 +92,9 @@ SET pg_ai_core.fuse = on;           -- route base-table scans through the fusion
 EXPLAIN SELECT * FROM docs WHERE category = 'x';   -- Custom Scan (pg_ai_fusion)
 ```
 
-It is built during the Docker image build (`postgresql-server-dev-16` + PGXS) and loaded via `shared_preload_libraries=pg_ai_core`. **Status:** the custom scan node executes correctly and is chosen by the planner (M1 step 1); adaptive over-fetch + filtering for the `filter + ORDER BY <dist> LIMIT k` pattern is the next step.
+It is built during the Docker image build (`postgresql-server-dev-16` + PGXS) and loaded via `shared_preload_libraries=pg_ai_core`.
+
+**Status — M1 done:** filtered ANN (relational filter + vector order + top-k with adaptive over-fetch) ships as `ai.filter_ann` / `ai.filtered_search` (see [`examples/filtered_search.sql`](examples/filtered_search.sql)), built on pgvector's `hnsw.iterative_scan` — no engine fork. The C `pg_ai_fusion` custom-scan node is the foundation for **M2**: *transparent* fusion (plain `WHERE … ORDER BY emb <=> $1 LIMIT k` auto-optimized) and filtering inside the ANN graph walk. See [docs-ai/RFC-0001](docs-ai/RFC-0001-v2-plan-fusion.md).
 
 ## Docs
 

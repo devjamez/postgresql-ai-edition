@@ -60,11 +60,11 @@ This uses **only the public extension API** (Custom Scan + `set_rel_pathlist_hoo
 
 | # | Goal | API surface | Risk / effort |
 |---|---|---|---|
-| **M1** | CustomScan that does **adaptive over-fetch + filter + top-k** for the pattern; cost-calibrated so it's chosen | public CustomScan + `set_rel_pathlist_hook` + child ANN index scan | Moderate. Achievable solo. The first real "fused plan node". **Step 1 DONE:** `pg_ai_fusion` custom scan provider built, executes correctly, chosen by planner (opt-in GUC `pg_ai_core.fuse`); over-fetch+filter logic is the remaining step. |
-| **M2** | Push the filter **into** the ANN traversal (true pre-filtering / better recall) | requires pgvector internals (`hnswscan.c` traversal) or a vendored fork | High. Touches another project's internals; bigger. |
+| **M1** | Filtered ANN: relational filter + vector order + top-k with adaptive over-fetch | implemented | **DONE.** Step 1: `pg_ai_fusion` Custom Scan provider (C) — executes, chosen by planner, opt-in GUC `pg_ai_core.fuse`. Step 2: `ai.filter_ann` / `ai.filtered_search` (pg_ai 0.2.0) — over-fetch via pgvector's `hnsw.iterative_scan=strict_order`. Key insight: pgvector 0.8 already exposes the iterative-scan budget, so **no engine fork is needed** for correct filtered top-k. |
+| **M2** | **Transparent** fusion: plain `WHERE quals ORDER BY emb <=> $1 LIMIT k` auto-optimized (no special function), and/or pushing the filter into the ANN traversal for better recall | planner/executor hooks (auto-enable iterative scan for the detected pattern) and/or pgvector internals (`hnswscan.c`) | High. The transparent auto-enable means manipulating `hnsw.iterative_scan` scoped to one query — do it at `ExecutorStart_hook`/`ExecutorEnd_hook` with `NewGUCNestLevel()` + `AtEOXact_GUC()` (the `auto_explain` pattern) so it never leaks to other queries. Reliable pattern detection on the plan + safe GUC scoping is the risk. Recommended as a team/contributor task. |
 | **M3** | Cost model for filtered-ANN + optional native types | core costing + type system | High; this is where a team is realistically needed. |
 
-**M1 is the next implementable step.** M2/M3 are real engine work that strain a solo timeline — flagged honestly, not promised.
+**M1 is DONE** (filtered ANN via `ai.filter_ann`/`ai.filtered_search` + the C custom-scan foundation). **M2/M3 are real engine work that strain a solo timeline** — designed here, not built. The honest reason M1 landed without a fork: pgvector 0.8's `hnsw.iterative_scan` already provides the adaptive candidate budget that the "fusion" needs; the remaining M2 value is *transparency* (no special function) and *recall* (filter inside the graph walk), both of which warrant a contributor with PG C depth.
 
 ## 5. Risks (must-handle in M1)
 1. **Costing** — within 1% fuzz the node gets dropped (`pathnode.c:52`). Calibrate `startup_cost`/`total_cost`.
