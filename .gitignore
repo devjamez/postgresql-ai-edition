@@ -1,3 +1,4 @@
 .env
 *.log
+*.zip
 .claude/settings.local.json
