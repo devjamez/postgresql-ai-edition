@@ -146,4 +146,32 @@ BEGIN
   RAISE NOTICE 'chunk + MMR OK (chunks=%, mmr_rows=%)', nchunks, nres;
 END $$;
 
+-- 8) M2 auto-apply (opt-in): transparent iterative scan, transaction-local (no leak)
+SET pg_ai_core.auto_fuse = on;
+SET enable_seqscan = off;
+SET enable_bitmapscan = off;
+DO $$
+DECLARE qv vector; n int;
+BEGIN
+  qv := (SELECT emb FROM ann_t LIMIT 1);
+  -- forced index + iterative OFF would under-return; auto_fuse must enable it -> full 10
+  SELECT count(*) INTO n FROM (SELECT 1 FROM ann_t WHERE cat = 'rare' ORDER BY emb <=> qv LIMIT 10) s;
+  IF n <> 10 THEN
+    RAISE EXCEPTION 'auto_fuse transparent enable failed (got % of 10)', n;
+  END IF;
+  RAISE NOTICE 'auto_fuse transparent OK (% rows)', n;
+END $$;
+
+SET enable_seqscan = on;
+SET enable_bitmapscan = on;
+SET pg_ai_core.auto_fuse = off;
+DO $$
+BEGIN
+  -- transaction-local set must have reverted by now (new transaction)
+  IF current_setting('hnsw.iterative_scan') <> 'off' THEN
+    RAISE EXCEPTION 'iterative_scan leaked across transactions: %', current_setting('hnsw.iterative_scan');
+  END IF;
+  RAISE NOTICE 'auto_fuse no-leak OK';
+END $$;
+
 \echo '=== ALL SMOKE TESTS PASSED ==='

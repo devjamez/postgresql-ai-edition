@@ -10,6 +10,7 @@
  */
 #include "postgres.h"
 #include "fmgr.h"
+#include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/planner.h"
 #include "port/atomics.h"
@@ -36,9 +37,11 @@ static PgAiCoreShared *pgais = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static shmem_request_hook_type prev_shmem_request_hook = NULL;
 static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
+static ExecutorStart_hook_type prev_ExecutorStart_hook = NULL;
 
-/* GUC */
+/* GUCs */
 static bool pg_ai_notice = true;
+static bool pg_ai_auto_fuse = false;
 
 static bool
 query_is_ai_semantic(const char *q)
@@ -89,6 +92,31 @@ pg_ai_planner(Query *parse, const char *query_string,
 	if (prev_planner_hook)
 		return prev_planner_hook(parse, query_string, cursorOptions, boundParams);
 	return standard_planner(parse, query_string, cursorOptions, boundParams);
+}
+
+/*
+ * M2 auto-apply (opt-in via pg_ai_core.auto_fuse): for a detected filtered-ANN
+ * query, transparently turn on iterative ANN scans so a selective filter still
+ * returns the full top-k. Uses a TRANSACTION-LOCAL GUC set (auto-reverts at end
+ * of transaction) — no manual restore, no leak across transactions.
+ */
+static void
+pg_ai_ExecutorStart(QueryDesc *queryDesc, int eflags)
+{
+	if (prev_ExecutorStart_hook)
+		prev_ExecutorStart_hook(queryDesc, eflags);
+	else
+		standard_ExecutorStart(queryDesc, eflags);
+
+	if (pg_ai_auto_fuse &&
+		queryDesc->sourceText != NULL &&
+		query_is_fusion_candidate(queryDesc->sourceText) &&
+		GetConfigOption("hnsw.iterative_scan", true, false) != NULL)
+	{
+		(void) set_config_option("hnsw.iterative_scan", "strict_order",
+								 PGC_USERSET, PGC_S_SESSION,
+								 GUC_ACTION_LOCAL, true, 0, false);
+	}
 }
 
 static void
@@ -187,8 +215,20 @@ _PG_init(void)
 	prev_shmem_startup_hook = shmem_startup_hook;
 	shmem_startup_hook = pg_ai_shmem_startup;
 
+	DefineCustomBoolVariable("pg_ai_core.auto_fuse",
+							 "Transparently enable iterative ANN scans for detected filtered-vector queries.",
+							 NULL,
+							 &pg_ai_auto_fuse,
+							 false,
+							 PGC_USERSET,
+							 0,
+							 NULL, NULL, NULL);
+
 	prev_planner_hook = planner_hook;
 	planner_hook = pg_ai_planner;
+
+	prev_ExecutorStart_hook = ExecutorStart_hook;
+	ExecutorStart_hook = pg_ai_ExecutorStart;
 
 	/* register the V2 fusion custom-scan provider */
 	pg_ai_fusion_init();

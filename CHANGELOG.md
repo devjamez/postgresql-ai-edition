@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versioning is [SemVer](https://semver.org/).
 
+## [0.5.1] — 2026-06-04
+
+### Added — V2 M2 transparent fusion (opt-in)
+- `pg_ai_core.auto_fuse` GUC (default off): when on, the `ExecutorStart` hook detects a filtered-ANN query (`WHERE … ORDER BY emb <=> $1 LIMIT k`) and transparently sets `hnsw.iterative_scan = strict_order` **transaction-locally** (auto-reverts at transaction end, no cross-query leak). Plain SQL then returns the full top-k where a bounded ANN scan would under-return — no special function needed. Pure runtime feature of `pg_ai_core` (no SQL/version change).
+
 ## [0.5.0] — 2026-06-04
 
 ### Added

@@ -127,7 +127,7 @@ EXPLAIN SELECT * FROM docs WHERE category = 'x';   -- Custom Scan (pg_ai_fusion)
 
 It is built during the Docker image build (`postgresql-server-dev-16` + PGXS) and loaded via `shared_preload_libraries=pg_ai_core`.
 
-**Status — M1 done:** filtered ANN (relational filter + vector order + top-k with adaptive over-fetch) ships as `ai.filter_ann` / `ai.filtered_search` (see [`examples/filtered_search.sql`](examples/filtered_search.sql)), built on pgvector's `hnsw.iterative_scan` — no engine fork. The C `pg_ai_fusion` custom-scan node is the foundation for **M2**: *transparent* fusion (plain `WHERE … ORDER BY emb <=> $1 LIMIT k` auto-optimized) and filtering inside the ANN graph walk. See [docs-ai/RFC-0001](docs-ai/RFC-0001-v2-plan-fusion.md).
+**Status — M1 done, M2 transparent auto-apply done (opt-in):** filtered ANN (relational filter + vector order + top-k with adaptive over-fetch) ships as `ai.filter_ann` / `ai.filtered_search` (see [`examples/filtered_search.sql`](examples/filtered_search.sql)), built on pgvector's `hnsw.iterative_scan` — no engine fork. With `SET pg_ai_core.auto_fuse = on`, the `ExecutorStart` hook **transparently** applies that to a plain `WHERE … ORDER BY emb <=> $1 LIMIT k` (transaction-local, auto-reverts, no leak). Remaining V2 work (filter inside the HNSW graph walk for recall; native types) is documented in [docs-ai/RFC-0001](docs-ai/RFC-0001-v2-plan-fusion.md).
 
 ## Docs
 
