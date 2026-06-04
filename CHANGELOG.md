@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versioning is [SemVer](https://semver.org/).
 
+## [0.10.0] — 2026-06-04
+
+### Changed — security
+- **Prompt-injection hardening for `ai.rag`:** retrieved context is now delimited (`<<<CONTEXTO>>>…`) and the system prompt instructs the model to treat it as untrusted data and ignore any instructions inside it. Mitigation, not elimination (documented in `docs-ai/10-ai-security.md`).
+
+### Upgrade
+- `ALTER EXTENSION pg_ai UPDATE TO '0.10.0';`
+
 ## [0.9.0] — 2026-06-04
 
 ### Added — scheduling (on top of the task worker)

@@ -24,5 +24,9 @@ The DB and the model server scale **independently**. `OLLAMA_URL` points at any 
 - Telemetry: `SELECT * FROM pg_ai_core_stats();`.
 - Backups: standard `pg_dump`/PITR; registry/agent tables are dumped (`pg_extension_config_dump`).
 
+## Kubernetes manifests
+
+Ready-to-apply manifests live in [`deploy/k8s/`](../deploy/k8s/): `pg-ai` namespace, an `ollama` Deployment (+PVC) for local inference, and a `pgai` StatefulSet (the published image, with `shared_preload_libraries=pg_ai_core` + the worker enabled) + Services + a Secret for the DB password. DB and model server scale independently; GPU nodes for `ollama` are a labels/limits change. **Status:** valid manifests, not yet exercised on a live cluster — a starting point to review per environment.
+
 ## Gap
-No Helm chart / Terraform yet — these topologies are documented designs. The Docker + GHCR path is the shipped, tested deployment.
+No Helm chart / Terraform yet — the raw manifests above are the K8s starting point; the Docker + GHCR path is the shipped, tested deployment.
