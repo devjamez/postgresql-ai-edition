@@ -3,6 +3,15 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versioning is [SemVer](https://semver.org/).
 
+## [0.8.0] — 2026-06-04
+
+### Added
+- **LLM reranker:** `ai.rerank(query, table, content_col, emb_col, k, fetch_n)` — retrieves `fetch_n` by ANN, then a single model call orders the `k` most relevant (listwise; falls back to ANN order if parsing fails). More precise than MMR for final ranking.
+- **Async tools & workflows:** `ai.submit_tool(tool, arg)` and `ai.submit_workflow(workflow, input)` enqueue work; the background worker now dispatches by task `kind` (`agent` / `tool` / `workflow`). `ai.tasks` gained a `kind` column.
+
+### Upgrade
+- `ALTER EXTENSION pg_ai UPDATE TO '0.8.0';`
+
 ## [0.7.0] — 2026-06-04
 
 ### Added — async agent runtime

@@ -43,7 +43,7 @@ process_one_task(void)
 	PushActiveSnapshot(GetTransactionSnapshot());
 
 	ret = SPI_execute(
-		"SELECT id, agent, input FROM ai.tasks WHERE status = 'pending' "
+		"SELECT id, kind, agent, input FROM ai.tasks WHERE status = 'pending' "
 		"ORDER BY id FOR UPDATE SKIP LOCKED LIMIT 1", false, 1);
 
 	if (ret == SPI_OK_SELECT && SPI_processed == 1)
@@ -52,15 +52,24 @@ process_one_task(void)
 		HeapTuple	row = SPI_tuptable->vals[0];
 		bool		isnull;
 		int64		taskid = DatumGetInt64(SPI_getbinval(row, td, 1, &isnull));
-		char	   *agent = SPI_getvalue(row, td, 2);
-		char	   *input = SPI_getvalue(row, td, 3);
+		char	   *kind = SPI_getvalue(row, td, 2);
+		char	   *target = SPI_getvalue(row, td, 3);	/* agent/tool/workflow name */
+		char	   *input = SPI_getvalue(row, td, 4);
 		char	   *result = NULL;
 		char	   *errm = NULL;
 		bool		ok = true;
 		Oid			at3[3];
 		Datum		vv3[3];
+		const char *callsql;
 
 		found = true;
+
+		if (kind && strcmp(kind, "tool") == 0)
+			callsql = "SELECT ai.run_tool($1, $2)";
+		else if (kind && strcmp(kind, "workflow") == 0)
+			callsql = "SELECT output FROM ai.run_workflow($1, $2) ORDER BY step DESC LIMIT 1";
+		else
+			callsql = "SELECT ai.call_agent($1, $2)";
 
 		BeginInternalSubTransaction(NULL);
 		PG_TRY();
@@ -68,10 +77,9 @@ process_one_task(void)
 			Oid			at[2] = {TEXTOID, TEXTOID};
 			Datum		vv[2];
 
-			vv[0] = CStringGetTextDatum(agent);
+			vv[0] = CStringGetTextDatum(target);
 			vv[1] = CStringGetTextDatum(input ? input : "");
-			if (SPI_execute_with_args("SELECT ai.call_agent($1, $2)",
-									  2, at, vv, NULL, false, 1) == SPI_OK_SELECT
+			if (SPI_execute_with_args(callsql, 2, at, vv, NULL, false, 1) == SPI_OK_SELECT
 				&& SPI_processed == 1)
 				result = SPI_getvalue(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1);
 			ReleaseCurrentSubTransaction();

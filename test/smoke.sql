@@ -217,6 +217,13 @@ BEGIN
     RAISE EXCEPTION 'unexpected task status: %', st;
   END IF;
   RAISE NOTICE 'async queue OK (task=%, status=%)', tid, st;
+
+  -- async tool/workflow submission (plumbing; dispatched by kind)
+  PERFORM ai.register_tool('up2', 'uppercase', 'upper(text)'::regprocedure);
+  IF (SELECT kind FROM ai.tasks WHERE id = ai.submit_tool('up2', 'x')) <> 'tool' THEN
+    RAISE EXCEPTION 'submit_tool did not set kind=tool';
+  END IF;
+  RAISE NOTICE 'async tool/workflow submission OK';
 END $$;
 
 \echo '=== ALL SMOKE TESTS PASSED ==='
