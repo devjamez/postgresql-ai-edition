@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versioning is [SemVer](https://semver.org/).
 
+## [0.2.0] — 2026-06-04
+
+### Added
+- `ai.filter_ann(query_embedding, table, content_col, emb_col, filter_sql, k)` — **filtered ANN search**: relational filter + vector ordering + top-k, with **adaptive over-fetch** via pgvector's iterative index scan (`hnsw.iterative_scan = strict_order`), so a selective filter still returns `k` ordered rows instead of under-returning from a bounded candidate set.
+- `ai.filtered_search(query text, ...)` — convenience wrapper that embeds the query then calls `ai.filter_ann`.
+- Default generation model is now `llama3.1:8b`.
+- Upgrade path: `ALTER EXTENSION pg_ai UPDATE TO '0.2.0'`.
+
 ## [0.1.0] — 2026-06-04
 
 First public release.

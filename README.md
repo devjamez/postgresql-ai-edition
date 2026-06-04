@@ -62,6 +62,8 @@ Reset only the database (keeps the downloaded models):
 | `ai.similarity(a, b) -> float` | Cosine similarity in [0,1] |
 | `ai.semantic_match(emb, query, threshold) -> bool` | Convenience predicate (small tables only) |
 | `ai.rag(question, table, content_col, emb_col, k, model) -> text` | Retrieval-augmented answer |
+| `ai.filter_ann(emb, table, content_col, emb_col, filter_sql, k) -> setof` | Filtered ANN: relational filter + vector order + top-k (adaptive over-fetch) |
+| `ai.filtered_search(query, table, content_col, emb_col, filter_sql, k) -> setof` | `ai.filter_ann` with the query embedded for you |
 | `ai.create_agent(name, system_prompt, model) -> int` | Register an agent |
 | `ai.call_agent(name, message) -> text` | Call an agent (with memory) |
 

@@ -75,4 +75,29 @@ BEGIN
   RAISE NOTICE 'fusion custom scan OK (count=% , node chosen)', c;
 END $$;
 
+-- 5) filtered ANN search (adaptive over-fetch via iterative scan; no Ollama)
+CREATE TEMP TABLE ann_t (id int, cat text, emb vector(768));
+INSERT INTO ann_t
+SELECT g,
+       CASE WHEN g % 100 = 0 THEN 'rare' ELSE 'common' END,
+       ('[' || (SELECT string_agg(random()::text, ',') FROM generate_series(1, 768)) || ']')::vector
+FROM generate_series(1, 2000) g;
+CREATE INDEX ON ann_t USING hnsw (emb vector_cosine_ops);
+
+DO $$
+DECLARE
+  qv vector;
+  n  int;
+BEGIN
+  qv := ('[' || (SELECT string_agg(random()::text, ',') FROM generate_series(1, 768)) || ']')::vector;
+  -- ~20 'rare' rows exist; ask for 10 nearest among them. Adaptive over-fetch
+  -- must keep scanning past ef_search to find 10 that pass the filter.
+  SELECT count(*) INTO n
+    FROM ai.filter_ann(qv, 'ann_t', 'cat', 'emb', 'cat = ''rare''', 10);
+  IF n <> 10 THEN
+    RAISE EXCEPTION 'filtered ANN returned % rows, expected 10', n;
+  END IF;
+  RAISE NOTICE 'filtered ANN over-fetch OK (% rows)', n;
+END $$;
+
 \echo '=== ALL SMOKE TESTS PASSED ==='
