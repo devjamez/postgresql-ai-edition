@@ -20,7 +20,7 @@ SELECT pg_catalog.pg_extension_config_dump('ai.models', '');
 
 INSERT INTO ai.models (name, provider, kind, model_id, dimensions) VALUES
     ('default-embedding',  'ollama',    'embedding',  'nomic-embed-text',  768),
-    ('default-completion', 'ollama',    'completion', 'llama3.2',          NULL),
+    ('default-completion', 'ollama',    'completion', 'llama3.1:8b',       NULL),
     ('claude',             'anthropic', 'completion', 'claude-sonnet-4-6', NULL);
 
 -- ---------------------------------------------------------------------------
@@ -53,7 +53,7 @@ RETURNS text
 LANGUAGE plpython3u AS $$
 import os, json, urllib.request, urllib.error
 base = os.environ.get('OLLAMA_URL', 'http://ollama:11434')
-mdl  = model or os.environ.get('AI_CHAT_MODEL', 'llama3.2')
+mdl  = model or os.environ.get('AI_CHAT_MODEL', 'llama3.1:8b')
 payload = {'model': mdl, 'prompt': prompt, 'stream': False}
 if system:
     payload['system'] = system
@@ -149,7 +149,7 @@ CREATE TABLE ai.agents (
     id            serial PRIMARY KEY,
     name          text UNIQUE NOT NULL,
     system_prompt text NOT NULL,
-    model         text NOT NULL DEFAULT 'llama3.2',
+    model         text NOT NULL DEFAULT 'llama3.1:8b',
     created_at    timestamptz NOT NULL DEFAULT now()
 );
 SELECT pg_catalog.pg_extension_config_dump('ai.agents', '');
@@ -164,7 +164,7 @@ CREATE TABLE ai.agent_memory (
 SELECT pg_catalog.pg_extension_config_dump('ai.agent_memory', '');
 CREATE INDEX agent_memory_agent_idx ON ai.agent_memory(agent_id, id);
 
-CREATE FUNCTION ai.create_agent(name text, system_prompt text, model text DEFAULT 'llama3.2')
+CREATE FUNCTION ai.create_agent(name text, system_prompt text, model text DEFAULT 'llama3.1:8b')
 RETURNS int
 LANGUAGE sql AS $$
     INSERT INTO ai.agents(name, system_prompt, model)

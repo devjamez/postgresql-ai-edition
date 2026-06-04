@@ -31,7 +31,7 @@ SELECT ai.call_agent('advisor', 'I need a laptop for programming');
 ```
 
 - Installs as a normal extension: `CREATE EXTENSION pg_ai CASCADE;` (built on pgvector + PL/Python).
-- Local inference via Ollama (nomic-embed-text + llama3.2) — zero cost, zero keys. Optional Anthropic provider for generation.
+- Local inference via Ollama (nomic-embed-text + llama3.1:8b) — zero cost, zero keys. Optional Anthropic provider for generation.
 - Ships with `pg_ai_core`, a native C extension (planner hook + shared-memory telemetry + a Custom Scan provider) — the start of real engine-level relational+vector plan fusion (RFC in the repo).
 - PostgreSQL License, Docker one-liner, CI, tests.
 

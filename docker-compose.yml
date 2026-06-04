@@ -20,7 +20,7 @@ services:
       # Local inference via Ollama — no API key required.
       OLLAMA_URL: http://ollama:11434
       AI_EMBED_MODEL: nomic-embed-text
-      AI_CHAT_MODEL: llama3.2
+      AI_CHAT_MODEL: llama3.1:8b
       # Optional: only if you want Claude to generate answers (ai.complete_claude).
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:

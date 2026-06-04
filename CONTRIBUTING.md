@@ -18,7 +18,7 @@ Thanks for your interest in PostgreSQL AI Edition. Contributions are welcome.
 ```bash
 docker compose up -d --build
 docker compose exec -T ollama ollama pull nomic-embed-text
-docker compose exec -T ollama ollama pull llama3.2
+docker compose exec -T ollama ollama pull llama3.1:8b
 ```
 
 Reset a clean database (keeps Ollama models):

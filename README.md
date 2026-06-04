@@ -4,7 +4,7 @@
 
 Make PostgreSQL intelligent: embeddings, semantic search, RAG and agents — **inside the database**, with maximum PostgreSQL compatibility.
 
-This repository is the **thin edition**: a pure extension (no fork of the PostgreSQL C core) that delivers the full AI experience by orchestrating model APIs (OpenAI / Anthropic) from inside Postgres via PL/Python and SQL. It runs on **standard PostgreSQL** — no patched server.
+This repository is the **thin edition**: a pure extension (no fork of the PostgreSQL C core) that delivers the full AI experience by orchestrating models from inside Postgres via PL/Python and SQL — by default **locally via Ollama** (no API key), with an optional Anthropic provider. It runs on **standard PostgreSQL** — no patched server.
 
 > Why thin first? Forking the PostgreSQL C core is a multi-year, team-scale effort and breaks upstream compatibility. The thin edition ships the value now and keeps 100% compatibility. Native C internals (a semantic-aware planner, native types) are a later, surgical step — see [docs-ai/ADR-0001](docs-ai/ADR-0001-extension-vs-fork.md).
 
@@ -26,21 +26,21 @@ SELECT ai.call_agent('asesor', 'busco una laptop para programar');
 ## Requirements
 
 - **Docker Desktop** (the only thing you must install).
-- An **OpenAI API key** (required — embeddings + completion). An Anthropic key is optional, for Claude-generated answers.
+- **~8 GB of free RAM** — the generation model runs locally on your machine.
 
-> No GPU and no servers are needed: inference runs on the providers' servers via API. Self-hosted local models (Llama) are a future option.
+> No API key and no GPU required: inference runs locally via Ollama (`nomic-embed-text` + `llama3.1:8b`). An optional Anthropic key enables Claude-generated answers (`ai.complete_claude`). A smaller model (e.g. `llama3.2`) works if RAM is tight — set `AI_CHAT_MODEL` in `docker-compose.yml`.
 
 ## Quickstart
 
 ```bash
-# 1. configure your key
-cp .env.example .env
-#   edit .env -> OPENAI_API_KEY=sk-...
-
-# 2. build & start (first run pulls images + compiles the container)
+# 1. build & start (first run pulls images + compiles the container)
 docker compose up -d --build
 
-# 3. the extensions auto-install on first boot (sql/00_init.sql runs
+# 2. pull the local models, one time (~5 GB; embeddings + generation)
+docker compose exec -T ollama ollama pull nomic-embed-text
+docker compose exec -T ollama ollama pull llama3.1:8b
+
+# 3. extensions auto-install on first boot (sql/00_init.sql runs
 #    CREATE EXTENSION pg_ai CASCADE + pg_ai_core). To install manually elsewhere:
 #    psql> CREATE EXTENSION pg_ai CASCADE;   -- pulls in vector + plpython3u
 #    psql> CREATE EXTENSION pg_ai_core;       -- native C planner pilot
@@ -49,15 +49,16 @@ docker compose up -d --build
 docker compose exec -T db psql -U postgres -d pgai < examples/demo.sql
 ```
 
-Reset everything (re-run init scripts): `docker compose down -v && docker compose up -d --build`.
+Reset only the database (keeps the downloaded models):
+`docker compose rm -fs db && docker volume rm postgresqlaiedition_pgai_data && docker compose up -d db`
 
 ## SQL surface
 
 | Function | Purpose |
 |---|---|
-| `ai.embed(text) -> vector` | Embedding (OpenAI `text-embedding-3-small`, 1536d) |
-| `ai.complete(prompt, system, model) -> text` | Completion via OpenAI |
-| `ai.complete_claude(prompt, system, model, max_tokens) -> text` | Completion via Anthropic |
+| `ai.embed(text) -> vector` | Embedding (Ollama `nomic-embed-text`, 768d) |
+| `ai.complete(prompt, system, model) -> text` | Completion via Ollama (`llama3.1:8b`) |
+| `ai.complete_claude(prompt, system, model, max_tokens) -> text` | Completion via Anthropic (optional) |
 | `ai.similarity(a, b) -> float` | Cosine similarity in [0,1] |
 | `ai.semantic_match(emb, query, threshold) -> bool` | Convenience predicate (small tables only) |
 | `ai.rag(question, table, content_col, emb_col, k, model) -> text` | Retrieval-augmented answer |
@@ -68,7 +69,7 @@ Catalog: `ai.models`, `ai.agents`, `ai.agent_memory`.
 
 ## Security
 
-- API keys live only in the **server environment** (`.env` → container env). Never in SQL, never in the repo. `.env` is gitignored.
+- The default setup uses local Ollama and needs **no API key**. Any optional key (e.g. Anthropic) lives only in the **server environment** (`.env` → container env) — never in SQL, never in the repo. `.env` is gitignored.
 - `ai.embed`/`ai.complete*` use the **untrusted** `plpython3u` language → only superusers can create them; grant `EXECUTE` deliberately.
 - Treat any text sent to `ai.complete`/`ai.rag` as untrusted input (prompt-injection surface). See [docs-ai/TESTING.md](docs-ai/TESTING.md) and the roadmap.
 

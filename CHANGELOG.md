@@ -10,7 +10,7 @@ First public release.
 ### Added — `pg_ai` 0.1.0 (SQL extension)
 - Installable extension: `CREATE EXTENSION pg_ai CASCADE` (pulls in `vector` + `plpython3u`).
 - `ai.embed(text) -> vector` — embeddings via Ollama (`nomic-embed-text`, 768d).
-- `ai.complete(prompt, system, model)` — text generation via Ollama (`llama3.2`).
+- `ai.complete(prompt, system, model)` — text generation via Ollama (`llama3.1:8b`).
 - `ai.complete_claude(...)` — optional generation via the Anthropic API.
 - `ai.similarity()` / `ai.semantic_match()` — cosine similarity helpers.
 - `ai.rag(question, table, content_col, emb_col, k, model)` — retrieval-augmented generation.

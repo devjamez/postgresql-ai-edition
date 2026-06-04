@@ -21,7 +21,7 @@ See the [README](README.md#quickstart). One command brings up PostgreSQL + pgvec
 - **Ollama** running locally (or any reachable host), with the models pulled:
   ```bash
   ollama pull nomic-embed-text   # embeddings (768d)
-  ollama pull llama3.2           # generation
+  ollama pull llama3.1:8b        # generation (~5 GB, needs ~8 GB free RAM)
   ```
 
 On Debian/Ubuntu:
@@ -55,7 +55,7 @@ The provider functions read configuration from the **server process environment*
 [Service]
 Environment=OLLAMA_URL=http://localhost:11434
 Environment=AI_EMBED_MODEL=nomic-embed-text
-Environment=AI_CHAT_MODEL=llama3.2
+Environment=AI_CHAT_MODEL=llama3.1:8b
 # Optional, only for ai.complete_claude():
 # Environment=ANTHROPIC_API_KEY=...
 ```
