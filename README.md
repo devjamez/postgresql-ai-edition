@@ -131,7 +131,9 @@ It is built during the Docker image build (`postgresql-server-dev-16` + PGXS) an
 
 ## Docs
 
+- [**Knowledge base index**](docs-ai/README.md) · [**Master Architecture**](docs-ai/MASTER-ARCHITECTURE.md)
 - [Demo — real output](docs-ai/DEMO.md)
+- [Architecture phases (FASE 1–12)](docs-ai/README.md#phases) — design docs grounded in the shipped code
 - [FASE 1 — Anatomy of PostgreSQL 16](docs-ai/01-postgresql-anatomy.md)
 - [ADR-0001 — Extension vs. Fork](docs-ai/ADR-0001-extension-vs-fork.md)
 - [RFC-0001 — V2 relational+vector plan fusion](docs-ai/RFC-0001-v2-plan-fusion.md)
