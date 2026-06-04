@@ -103,7 +103,7 @@ Datum
 pg_ai_core_version(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_TEXT_P(cstring_to_text(
-		"pg_ai_core 0.1 (native C planner hook + shared-memory telemetry)"));
+		"pg_ai_core 0.1.0 (native C planner hook + shared-memory telemetry)"));
 }
 
 PG_FUNCTION_INFO_V1(pg_ai_core_planned);

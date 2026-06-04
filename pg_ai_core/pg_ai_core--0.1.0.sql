@@ -1,4 +1,4 @@
--- pg_ai_core 0.1 — native C planner integration + telemetry pilot
+-- pg_ai_core 0.1.0 — native C planner integration + telemetry pilot
 \echo Use "CREATE EXTENSION pg_ai_core" to load this file. \quit
 
 CREATE FUNCTION pg_ai_core_version()

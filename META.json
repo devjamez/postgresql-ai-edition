@@ -1,0 +1,58 @@
+{
+   "name": "pg_ai",
+   "abstract": "PostgreSQL AI Edition: embeddings, semantic search, RAG and agents inside PostgreSQL",
+   "description": "An installable PostgreSQL extension that adds embeddings, semantic search, retrieval-augmented generation (RAG) and agents with memory, orchestrating local (Ollama) or remote model APIs. Ships with pg_ai_core, a native C extension that integrates a planner hook and AI-workload telemetry into the engine.",
+   "version": "0.1.0",
+   "maintainer": [
+      "Gaston Jamez <devjamez@gmail.com>"
+   ],
+   "license": "postgresql",
+   "provides": {
+      "pg_ai": {
+         "abstract": "Embeddings, semantic search, RAG and agents",
+         "file": "pg_ai/pg_ai--0.1.0.sql",
+         "docfile": "README.md",
+         "version": "0.1.0"
+      },
+      "pg_ai_core": {
+         "abstract": "Native C planner-hook integration and AI-workload telemetry (V2 pilot)",
+         "file": "pg_ai_core/pg_ai_core--0.1.0.sql",
+         "version": "0.1.0"
+      }
+   },
+   "prereqs": {
+      "runtime": {
+         "requires": {
+            "PostgreSQL": "16.0.0",
+            "vector": 0,
+            "plpython3u": 0
+         }
+      }
+   },
+   "resources": {
+      "homepage": "https://github.com/devjamez/postgresql-ai-edition",
+      "bugtracker": {
+         "web": "https://github.com/devjamez/postgresql-ai-edition/issues"
+      },
+      "repository": {
+         "url": "https://github.com/devjamez/postgresql-ai-edition.git",
+         "web": "https://github.com/devjamez/postgresql-ai-edition",
+         "type": "git"
+      }
+   },
+   "generated_by": "Develone LLC",
+   "meta-spec": {
+      "version": "1.0.0",
+      "url": "https://pgxn.org/meta/spec.txt"
+   },
+   "tags": [
+      "ai",
+      "embeddings",
+      "vector",
+      "rag",
+      "agents",
+      "llm",
+      "semantic search",
+      "ollama"
+   ]
+}
