@@ -40,8 +40,10 @@ cp .env.example .env
 # 2. build & start (first run pulls images + compiles the container)
 docker compose up -d --build
 
-# 3. load the AI layer (only needed if you reset the volume; init scripts auto-run on first boot)
-#    the sql/ files run automatically on first initialization.
+# 3. the extensions auto-install on first boot (sql/00_init.sql runs
+#    CREATE EXTENSION pg_ai CASCADE + pg_ai_core). To install manually elsewhere:
+#    psql> CREATE EXTENSION pg_ai CASCADE;   -- pulls in vector + plpython3u
+#    psql> CREATE EXTENSION pg_ai_core;       -- native C planner pilot
 
 # 4. run the demo
 docker compose exec -T db psql -U postgres -d pgai < examples/demo.sql
