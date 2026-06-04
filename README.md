@@ -71,6 +71,9 @@ docker compose exec -T ollama ollama pull llama3.1:8b
 docker compose exec -T db psql -U postgres -d pgai < examples/demo.sql
 ```
 
+Prefer a prebuilt image instead of building locally? Pull it from GHCR:
+`docker pull ghcr.io/devjamez/postgresql-ai-edition:latest` (or `:pg17`).
+
 Reset only the database (keeps the downloaded models):
 `docker compose rm -fs db && docker volume rm postgresqlaiedition_pgai_data && docker compose up -d db`
 
