@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/devjamez/postgresql-ai-edition/actions/workflows/ci.yml/badge.svg)](https://github.com/devjamez/postgresql-ai-edition/actions/workflows/ci.yml)
 
-Make PostgreSQL intelligent: embeddings, semantic search, RAG and agents — **inside the database**, with maximum PostgreSQL compatibility.
+### AI inside PostgreSQL — embeddings, semantic search, RAG & agents, callable from SQL. No API key. No second database. One `docker compose up`.
 
-This repository is the **thin edition**: a pure extension (no fork of the PostgreSQL C core) that delivers the full AI experience by orchestrating models from inside Postgres via PL/Python and SQL — by default **locally via Ollama** (no API key), with an optional Anthropic provider. It runs on **standard PostgreSQL** — no patched server.
+Your embeddings live next to your data (ACID, JOINs, Row-Level Security). Inference runs **locally via Ollama** — no key, nothing leaves the host. A native C extension makes the **engine itself AI-aware**. Stop syncing a separate vector DB — delete the box from your diagram. → [**Why in-database**](#why-in-database-the-technical-case)
 
-> Why thin first? Forking the PostgreSQL C core is a multi-year, team-scale effort and breaks upstream compatibility. The thin edition ships the value now and keeps 100% compatibility. Native C internals (a semantic-aware planner, native types) are a later, surgical step — see [docs-ai/ADR-0001](docs-ai/ADR-0001-extension-vs-fork.md).
+Runs on **standard PostgreSQL 16/17** — it's a pure extension, no fork. (Deep C internals are a later, surgical step — see [ADR-0001](docs-ai/ADR-0001-extension-vs-fork.md).)
 
 ## What you get
 
